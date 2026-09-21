@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>个人博客动画首页 · 技术解析 / 前置条件 / 基础报价</title>
+  <style>
+    :root {
+      --ink: #1b1c1e;
+      --muted: #6b6e76;
+      --line: #e6e4df;
+      --paper: #fffdf9;
+      --soft: #f4f0e8;
+      --peach: #f3d5b5;
+      --accent: #c45c26;
+      --navy: #2b3038;
+      --ok: #2f6b4f;
+      --warn: #9a6b1f;
+      --risk: #9a3b2f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #ece8e1;
+      color: var(--ink);
+      line-height: 1.75;
+      font-size: 15px;
+    }
+    a { color: var(--accent); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 36px 18px 72px; }
+    .sheet {
+      background: var(--paper);
+      border: 1px solid #ddd8ce;
+    }
+    .hero {
+      padding: 42px 48px 36px;
+      background:
+        radial-gradient(ellipse at 20% 0%, #f8e6cf 0%, transparent 55%),
+        linear-gradient(180deg, #fffaf3 0%, var(--paper) 100%);
+      border-bottom: 1px solid var(--line);
+    }
+    .kicker {
+      font-size: 12px;
+      letter-spacing: .16em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 30px; line-height: 1.3; font-weight: 700; }
+    .lead { margin-top: 14px; font-size: 16px; color: #3d4048; max-width: 46em; }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .meta div { padding: 16px 16px 0 0; }
+    .meta b { display: block; font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: .08em; }
+    .body { padding: 36px 48px 52px; }
+    h2 {
+      font-size: 20px;
+      margin: 40px 0 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    h2:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+    h3 { font-size: 16px; margin: 22px 0 8px; }
+    p { margin: 0 0 12px; color: #2f333a; text-align: justify; }
+    ul, ol { padding-left: 1.2em; margin: 0 0 14px; }
+    li { margin: 5px 0; }
+    .note {
+      background: var(--soft);
+      border-left: 3px solid var(--accent);
+      padding: 14px 16px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .shots {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 10px;
+      margin: 16px 0 8px;
+    }
+    .shots img, .film img {
+      width: 100%;
+      display: block;
+      background: #ddd;
+    }
+    .shots .wide { grid-column: 1 / -1; }
+    .cap { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .film {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 12px 0 6px;
+    }
+    .film figure:nth-child(1),
+    .film figure:nth-child(2) { grid-column: span 3; }
+    .film figure:nth-child(3),
+    .film figure:nth-child(4),
+    .film figure:nth-child(5) { grid-column: span 2; }
+    .film figure figcaption {
+      font-size: 11px;
+      color: var(--muted);
+      padding-top: 6px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 10px 0 16px; }
+    th, td { border: 1px solid var(--line); padding: 10px 12px; vertical-align: top; text-align: left; }
+    th { background: var(--navy); color: #fff; font-weight: 600; font-size: 12px; }
+    tr:nth-child(even) td { background: #faf7f1; }
+    .price { font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 7px;
+      border: 1px solid currentColor;
+      margin-right: 6px;
+      letter-spacing: .04em;
+    }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .risk { color: var(--risk); }
+    .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+    .card {
+      border: 1px solid var(--line);
+      padding: 16px;
+      background: #fff;
+      min-height: 100%;
+    }
+    .card h3 { margin-top: 0; }
+    .card .num { font-size: 22px; font-weight: 700; color: var(--accent); margin: 8px 0 10px; }
+    .card.rec { border-color: #d8b08a; background: #fff8f0; }
+    .tiny { font-size: 12px; color: var(--muted); }
+    footer {
+      margin-top: 36px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--line);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    @media (max-width: 800px) {
+      .hero, .body { padding: 24px 20px; }
+      .meta, .cards, .film, .shots { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: none; }
+      .sheet { border: 0; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article class="sheet">
+      <header class="hero">
+        <p class="kicker">PROJECT BRIEF · 供甲方确认</p>
+        <h1>个人博客动画首页<br>前置条件与基础报价</h1>
+        <p class="lead">
+          您提供的参考是豆包官网 About 页（<a href="https://www.doubao.com/about" target="_blank" rel="noreferrer">doubao.com/about</a>），以及一段约 25 秒的页面录屏。
+          本文件说明：这段动画实际怎么做成、个人博客项目要先具备什么、以及现阶段可报的基础价格区间。
+        </p>
+        <div class="meta">
+          <div><b>文档日期</b>2026-09-19</div>
+          <div><b>文档性质</b>估价说明，非正式合同</div>
+          <div><b>参考站</b>豆包 About 开场 + 后续长滚动</div>
+          <div><b>有效期</b>报价自发出日起 15 个自然日</div>
+        </div>
+      </header>
+
+      <div class="body">
+        <h2>1. 我们先对齐一件事</h2>
+        <p>
+          您发来的视频，不是一段独立的宣传片，而是<strong>豆包 About 页开场动画的屏幕录制</strong>（约 24.9 秒，2560×1436）。
+          视频里的 3D 人物、环绕卡片、标题逐行出现、景深虚化，与线上页面是同一套效果。
+        </p>
+        <p>
+          豆包这一页在开场之后还有很长的滚动叙事（整页高度约 27,000 像素，大约 20 多个屏幕）。
+          您目前只给了开场 25 秒。因此报价会拆成「只做开场」和「开场 + 滚动章节 + 博客」两层，避免后期范围膨胀。
+        </p>
+        <div class="note">
+          版权提醒：豆包的 3D 角色、卡片插画、文案和成片不能直接用于您的博客。
+          我们做的是<strong>同类型体验</strong>（气质、节奏、交互），不是 1:1 搬运。人物和卡片必须换成您自己的形象与内容。
+        </div>
+
+        <h2>2. 视频里的动画，拆开看是什么</h2>
+        <div class="film">
+          <figure>
+            <img src="assets/shot-01-blur.jpg" alt="开场：卡片失焦，标题浮现" />
+            <figcaption>0–2 秒 · 失焦入场</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-02-character.jpg" alt="3D 角色挥手问好" />
+            <figcaption>4–5 秒 · 角色登场</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-03-orbit.jpg" alt="角色被内容卡片环绕" />
+            <figcaption>6–9 秒 · 卡片环绕</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-04-focus.jpg" alt="镜头推近到撰写真文章卡片" />
+            <figcaption>11 秒 · 镜头对焦</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-05-hero.jpg" alt="开场结束落到可交互首页" />
+            <figcaption>25 秒 · 落到首页</figcaption>
+          </figure>
+        </div>
+        <p class="cap">以上截取自您提供的录屏。完整开场可概括为五段：失焦 → 角色 → 环绕 → 对焦翻牌 → 落版可滚动。</p>
+
+        <h3>2.1 开场 25 秒：看起来像实时 3D，实际是「预渲染成片」</h3>
+        <p>
+          线上页面里，这段开场对应一条 1920×1080、时长 25.2 秒的静音 MP4（<code>opening.mp4</code>）。
+          人物走路、挥手、气泡「Hi 我是豆包」、卡片绕行、镜头推拉，都是<strong>先在三维软件里渲染成视频，再嵌进网页播放</strong>。
+          页面上没有实时 WebGL 角色，也没有 Three.js 场景在算这个人。
+        </p>
+        <p>这对报价很关键：影视级角色不是前端写出来的，是 3D 制作成本。前端负责的是播放、衔接、跳过、和后面的可交互层。</p>
+
+        <h3>2.2 开场播完之后：才变成「真网页」</h3>
+        <p>25 秒结束后，视频淡出，同一构图切到可交互层。这一层用到的是网页技术，不是再播一整条电影：</p>
+        <ul>
+          <li><strong>CSS 三维透视</strong>：卡片用 <code>perspective</code> + 位移/旋转/缩放，做出环绕空间感，并带轻微悬浮。</li>
+          <li><strong>循环背景视频</strong>：一条更短的循环 MP4 垫在后面，保持光晕和呼吸感。</li>
+          <li><strong>景深虚化</strong>：不在焦点的卡片做 blur / opacity，模拟镜头对焦。</li>
+          <li><strong>跳过按钮</strong>：不想看开场的人可以直接落到首页。</li>
+        </ul>
+
+        <h3>2.3 再往下滚：整页其实是一部「用滚动当时间轴」的短片</h3>
+        <p>豆包 About 在开场后还有写作 / 绘画 / 搜索 / 音乐等章节。实现方式是：</p>
+        <ul>
+          <li><strong>粘滞章节（sticky）</strong>：一屏钉住，滚动不再推走画面，而是驱动动画进度。</li>
+          <li><strong>滚动驱动变换</strong>：模块的位置、缩放、旋转、模糊随滚动值变化；技能演示本身又是几条独立 MP4。</li>
+          <li><strong>Lottie（矢量动画）</strong>：章节背景有大尺寸 SVG/Lottie，Safari 另做降级。</li>
+          <li><strong>前端框架</strong>：React 单页 + 工具类样式；整页高度约 27,100 px。</li>
+        </ul>
+        <div class="note">
+          一句话：<strong>贵的是 3D 成片和原创内容，难的是滚动时间轴和性能。</strong>
+          前端可以复现这种体验，但不能在没有角色、没有卡片、没有文案的情况下「凭空长得一模一样」。
+        </div>
+
+        <h2>3. 技术对照（给双方对齐用）</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:22%">您看到的效果</th>
+              <th>实际做法</th>
+              <th style="width:28%">个人博客建议</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3D 人物登场、挥手、说话</td>
+              <td>预渲染 MP4，不是网页里实时算的人</td>
+              <td>有成片就嵌入；没有则用照片 / 现成形象，或另请 3D</td>
+            </tr>
+            <tr>
+              <td>卡片环绕、前后景深</td>
+              <td>CSS 3D + 模糊 + 透明度</td>
+              <td>这一段适合作为博客首页的核心，前端可独立完成</td>
+            </tr>
+            <tr>
+              <td>标题逐行出现、镜头对焦某张卡</td>
+              <td>时间轴编排（视频内 + 网页衔接）</td>
+              <td>用滚动或入场时间轴重做，不复制豆包文案</td>
+            </tr>
+            <tr>
+              <td>后续能力章节左右排版、白块切入</td>
+              <td>sticky + 滚动驱动 + 章节视频 / Lottie</td>
+              <td>按您的栏目改成「作品 / 文章 / 关于 / 联系」</td>
+            </tr>
+            <tr>
+              <td>整页很长、滚动像在剪片子</td>
+              <td>超长文档高度当时间轴，约 20+ 屏</td>
+              <td>博客建议 6–10 屏，太长伤阅读和手机性能</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>4. 前置条件（开工前必须确认）</h2>
+        <p>目前素材是否提供，您这边也不确定。这是报价里最大的变量。下面按「没有它就做不了 / 没有它会降级 / 可以后补」分开。</p>
+
+        <h3>4.1 没有这些，不能开工</h3>
+        <table>
+          <thead>
+            <tr><th style="width:26%">事项</th><th>说明</th><th style="width:22%">状态</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>做开场，还是做整页</td>
+              <td>只做 25 秒首页，还是开场 + 滚动章节 + 文章系统，范围差一倍以上</td>
+              <td><span class="tag warn">待您拍板</span></td>
+            </tr>
+            <tr>
+              <td>站点基本信息</td>
+              <td>博客名称、域名意向、一句话介绍、四个首页关键词（对应豆包那四行大字）</td>
+              <td><span class="tag warn">待提供</span></td>
+            </tr>
+            <tr>
+              <td>人物方案</td>
+              <td>要不要「有一个自己的角色」：真人照片 / 插画形象 / 另做 3D。豆包那个人物不能用</td>
+              <td><span class="tag warn">待拍板</span></td>
+            </tr>
+            <tr>
+              <td>版权与原创</td>
+              <td>确认做「同类型」，不做豆包素材搬运；卡片、文章、配图均为您的内容或授权素材</td>
+              <td><span class="tag warn">待确认</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4.2 没有这些，效果会明显降级</h3>
+        <table>
+          <thead>
+            <tr><th style="width:26%">事项</th><th>说明</th><th style="width:22%">备选</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>开场成片（25 秒级）</td>
+              <td>若您能提供已渲染好的人物视频，气质最接近参考</td>
+              <td>无成片则改为网页实时编排，不做影视级人物运动</td>
+            </tr>
+            <tr>
+              <td>8–16 张内容卡片</td>
+              <td>文章封面、作品图、音乐/项目卡、对话气泡文案</td>
+              <td>可由我用占位风格先铺，定稿前必须换成真内容</td>
+            </tr>
+            <tr>
+              <td>字体与主色</td>
+              <td>中英文字体授权、品牌色。豆包是暖橙渐变 + 极细黑体</td>
+              <td>未指定则按参考气质自定一版，含 1 轮调整</td>
+            </tr>
+            <tr>
+              <td>文章样稿</td>
+              <td>至少 3 篇真实文章，用于列表、详情和卡片抽图</td>
+              <td>可先用结构稿，上线前补齐</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4.3 您需要决定的博客功能</h3>
+        <ul>
+          <li>要不要<strong>自己在后台发文章</strong>（有后台贵一截；没有则我帮您做成静态更新）</li>
+          <li>语言：仅中文，还是中英</li>
+          <li>托管：您已有服务器 / 需要我代上线（域名、备案、SSL 费用另计）</li>
+          <li>手机：完整动画，还是手机上改为轻量版（推荐轻量，视频太多会卡、会耗流量）</li>
+        </ul>
+
+        <h2>5. 基础报价估算</h2>
+        <p>
+          以下为 2026 年 9 月、由我独立交付的<strong>基础估算</strong>，人民币含基础沟通与两轮修改，不含 3D 影视制作、不含服务器与备案。
+          锁定范围和素材后，可出正式报价单。
+        </p>
+
+        <div class="cards">
+          <div class="card">
+            <p class="tiny">方案 A · 入门</p>
+            <h3>开场气质版 + 博客骨架</h3>
+            <p class="num">¥16,800 – 22,000</p>
+            <ul>
+              <li>还原开场气质：渐变空间、环绕卡片、景深、大标题、可跳过</li>
+              <li>不做定制 3D 人物电影</li>
+              <li>首页 / 关于 / 文章列表 / 文章详情</li>
+              <li>桌面完整，手机轻量</li>
+            </ul>
+            <p class="tiny">工期约 18–25 个工作日</p>
+          </div>
+          <div class="card rec">
+            <p class="tiny">方案 B · 建议</p>
+            <h3>开场 + 滚动章节 + 博客</h3>
+            <p class="num">¥28,000 – 38,000</p>
+            <ul>
+              <li>包含方案 A</li>
+              <li>再做 4 个粘滞章节（例如作品、写作、生活、联络）</li>
+              <li>章节内滚动驱动 + 1–2 条演示视频或 Lottie</li>
+              <li>静态发文或轻量后台二选一（轻量后台取区间高位）</li>
+            </ul>
+            <p class="tiny">工期约 4–6 周 · 最接近「有博客、也有那种感觉」</p>
+          </div>
+          <div class="card">
+            <p class="tiny">方案 C · 对标</p>
+            <h3>接近豆包 About 完整体量</h3>
+            <p class="num">¥68,000 – 98,000</p>
+            <ul>
+              <li>含外包 3D 开场成片（需另找建模/渲染）</li>
+              <li>15–20 屏滚动叙事、多段视频、Lottie</li>
+              <li>文章后台、基础 SEO、双端细调</li>
+              <li>周期和人数都不是「一个人赶一版」</li>
+            </ul>
+            <p class="tiny">工期约 8–12 周 · 仅在您明确要影视级角色时选</p>
+          </div>
+        </div>
+
+        <h3>5.1 建议您怎么选</h3>
+        <p>
+          若目标是「我的个人博客，打开先有那种高级感，然后能读文章」——选 <strong>方案 B</strong>。
+          方案 A 适合先验证气质；方案 C 只有在您准备好角色设定、3D 预算和更长周期时才值得。
+        </p>
+        <p>
+          <strong>基础报价（按建议方案取中位，便于您内部沟通）：方案 B　¥33,000。</strong>
+          在素材齐全、范围不膨胀的前提下，以此为讨论锚点。
+        </p>
+
+        <h3>5.2 什么会让价格上浮</h3>
+        <table>
+          <thead>
+            <tr><th style="width:30%">情况</th><th>影响</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>没有卡片、没有文章、没有形象，需要我代做内容设计</td>
+              <td>加 ¥3,000 – 8,000，或先做结构、内容另计</td>
+            </tr>
+            <tr>
+              <td>必须定制 3D 人物并渲染开场片</td>
+              <td>3D 制作另计，常见 ¥15,000 – 40,000（按秒数和模型复杂度）</td>
+            </tr>
+            <tr>
+              <td>完整后台（分类、草稿、配图上传、多作者）</td>
+              <td>在方案 B 上再加 ¥6,000 – 12,000</td>
+            </tr>
+            <tr>
+              <td>手机也要同等重量级视频动画</td>
+              <td>加 ¥4,000 – 8,000，且要接受流量和兼容性风险</td>
+            </tr>
+            <tr>
+              <td>超过约定的两轮大改（改结构、改剧情、推翻章节）</td>
+              <td>按人天另计，¥1,200 / 人天</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>5.3 付款与修改</h3>
+        <ul>
+          <li>定金 40% 后开工；中期可预览主动画时 40%；上线验收 20%。</li>
+          <li>每个阶段含 2 轮修改。改文案、换图不另计；改叙事结构或新增章节另议。</li>
+          <li>源码在尾款到齐后交付。托管、域名、备案、CDN、后续小改，不在本估算内。</li>
+        </ul>
+
+        <h2>6. 工期怎么排（以方案 B 为例）</h2>
+        <table>
+          <thead>
+            <tr><th style="width:18%">阶段</th><th>做什么</th><th style="width:18%">您需要配合</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>第 1 周</td>
+              <td>锁定范围、信息架构、动画分镜（不写代码先画时间轴）</td>
+              <td>拍板方案、给名称/四词/形象方向</td>
+            </tr>
+            <tr>
+              <td>第 2–3 周</td>
+              <td>开场与卡片空间、跳过、桌面主视觉</td>
+              <td>提供卡片图、确认主色字体</td>
+            </tr>
+            <tr>
+              <td>第 4–5 周</td>
+              <td>滚动章节、文章列表/详情、手机降级</td>
+              <td>提供至少 3 篇文章</td>
+            </tr>
+            <tr>
+              <td>第 6 周</td>
+              <td>性能、兼容、上线、小改</td>
+              <td>验收、准备域名/主机</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>7. 请您直接回复的 4 个问题</h2>
+        <ol>
+          <li>只要视频里这 25 秒，还是开场 + 后面那种一屏一屏往下讲的章节？</li>
+          <li>首页要不要「一个属于您的人物」？如果要，是照片、插画，还是愿意另做 3D？</li>
+          <li>文章是否需要您日后自己在后台发布？</li>
+          <li>现在能否提供：博客名、四个关键词、8 张以上可用图片、至少 1 篇样稿？若暂时没有，是否接受先用占位、定稿前再换？</li>
+        </ol>
+        <p>
+          您回复这四项后，我可以把上面的区间收成<strong>一页正式报价</strong>（含明确清单、不含项、验收标准）。
+        </p>
+
+        <footer>
+          本页仅供项目沟通 · 技术结论来自对 doubao.com/about 的页面核查，以及对您提供录屏的逐帧对照 · 2026-09-19
+        </footer>
+      </div>
+    </article>
+  </div>
+</body>
+</html>

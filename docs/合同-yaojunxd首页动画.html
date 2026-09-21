@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>网站首页动画制作合同 · yaojunxd.com</title>
+  <style>
+    :root { --ink:#1b1c1e; --muted:#6b6e76; --line:#e6e4df; --navy:#2b3038; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:#ece8e1; color:var(--ink); line-height:1.75; font-size:14.5px; }
+    .wrap { max-width: 800px; margin: 0 auto; padding: 28px 14px 64px; }
+    .sheet { background:#fffdf9; border: 1px solid #ddd8ce; padding: 40px 44px 48px; }
+    h1 { font-size: 22px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
+    .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+    h2 { font-size: 16px; margin: 26px 0 10px; }
+    p, li { margin-bottom: 8px; text-align: justify; }
+    ul, ol { padding-left: 1.25em; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 8px 0 14px; }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+    th { background: var(--navy); color: #fff; font-size: 12px; }
+    .meta { margin-bottom: 18px; }
+    .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
+    .sign p { margin: 6px 0; }
+    .line { border-bottom: 1px solid #bbb; min-width: 160px; display: inline-block; height: 1.2em; }
+    .note { background: #f4f0e8; padding: 10px 12px; margin: 12px 0; font-size: 13.5px; }
+    .views { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 4px; }
+    .views figure { border: 1px solid var(--line); background: #faf8f4; padding: 8px; }
+    .views img { width: 100%; height: 180px; object-fit: contain; background: #fff; display: block; }
+    .views figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
+    .stamp { height: 72px; display: block; margin: 8px 0 4px; }
+    .small { font-size: 12.5px; color: var(--muted); }
+    @page { size: A4; margin: 12mm 12mm 14mm; }
+    @media print {
+      body { background:#fff; }
+      .wrap { padding: 0; max-width: none; }
+      .sheet { border: 0; padding: 0; }
+      h2 { break-after: avoid; page-break-after: avoid; }
+      table, .note, .views, .sign, li { break-inside: avoid; page-break-inside: avoid; }
+      .views img { height: 150px; }
+    }
+    @media (max-width: 640px) { .sheet { padding: 22px 16px; } .sign { grid-template-columns: 1fr; } .views { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article class="sheet">
+      <h1>网站首页动画制作合同</h1>
+      <p class="sub">项目站点：yaojunxd.com　·　合同价款：人民币 4,500 元　·　签订日期：2026年9月21日</p>
+
+      <div class="meta">
+        <p><strong>甲方（委托方）：</strong>姚骏（站点 yaojunxd.com）</p>
+        <p><strong>乙方（承做方）：</strong>深圳市龙岗区梯泰思科技工作室（个体工商户）</p>
+        <p class="small">统一社会信用代码：92440300MA5H9RJG6W　·　经营者：周学明　·　类型：个体工商户</p>
+        <p>甲乙双方就甲方个人网站首页动画改版达成如下约定。本期不开具发票。</p>
+      </div>
+
+      <h2>第一条　项目目标</h2>
+      <p>参考 <strong>https://www.doubao.com/about</strong> 的首页气质，将开场动画复刻到甲方站点 <strong>yaojunxd.com</strong> 的首页。本期<strong>不做</strong>豆包页面下方的长滚动章节。在甲方现有宝塔面板、现有模板与后台基础上施工；<strong>不修改子页面逻辑</strong>、跳转、后台发布、文章内容，以及甲方已调过的 blog 图片比例。</p>
+
+      <h2>第二条　必须完成的范围（含在 4,500 元内）</h2>
+      <ol>
+        <li><strong>首页替换。</strong>仅替换/增加首页相关文件，接入甲方现有栏目。导航与子页面路由保持可用。</li>
+        <li><strong>桌面开场动画。</strong>气质参考豆包 About 开场：刷新后播放开场，再落到可点的标题/卡片。不做向下长滚动。</li>
+        <li><strong>手机单独一版。</strong>不是把桌面强行缩小。开场可缩短或直接落版；用可点入口填满屏幕高度，避免底部大块空白。</li>
+        <li><strong>主标题跳转。</strong>首页主标题/卡片点击后，进入甲方现有对应子界面（个人简介、学科竞赛、科研经历、知识产权等，具体用词与链接由甲方书面指定）。</li>
+        <li><strong>3D 人物模型。</strong>Ready Player Me 甲方已确认用不了。由乙方按本合同附件甲方提供的全身四视图（及后续补充的同人照片）生成可上网页的全身人物模型。出模工具不限定 Meshy，乙方可选用 Meshy 或其他可商用方案。不做半身胸像。不使用、不抠取豆包官方角色或成片。</li>
+        <li><strong>3D 人物动画。</strong>本期做到：出场、挥手、定格。模型导出后由乙方做网页可用的骨骼绑定与循环。不做电影级长表演。</li>
+        <li><strong>技能介绍图片旋转动画。</strong>首页技能/介绍卡片做 3D 透视旋转或环绕动效（气质参考豆包 About 中的卡片），素材用甲方现站已有图或甲方另行提供的图。</li>
+        <li><strong>全站美术风格。</strong>与现站暗黑主色保持一致。动画背景用深色，不把全站改成白底。子页面栏目结构、图文比例、后台逻辑仍不改；只统一配色观感，不重排版。若样板之后甲方改要浅色/白底全站，双方另议费用。</li>
+        <li><strong>全站字体统一。</strong>中文视觉目标为仿宋（仿宋_GB2312 一类），英文为 Times New Roman。做法见第四条，以各端加载同一套网页字体为准，解决微信、Safari、安卓、苹果、华为显示不一致的问题。</li>
+      </ol>
+
+      <h2>第三条　3D 生成方式与工具费</h2>
+      <p>3D 由乙方生成、修整并接入网页，不要求甲方自己出模。工具<strong>不限定 Meshy</strong>，乙方可按效果与授权自行选用 Meshy 或其他可商用出模/绑定方案。正式模型须可私人持有、可商用上网页；不用需公开署名的免费档作为交付模型。</p>
+      <p>因此产生的会员、积分或出模费用由甲方承担，实报实销，<strong>不含在 4,500 元内</strong>，总额控制在人民币约 <strong>120 元</strong>以内。票据或付款截图交甲方。超出 120 元须双方书面确认后再发生。费用可由乙方代付后报销，或甲方按乙方指定方式支付。</p>
+      <p>甲方对照片肖像与版权负责。乙方不把该模型公开发布到第三方社区，并在本期结束后把模型文件交给甲方。</p>
+
+      <h2>第四条　字体落实方式</h2>
+      <p>各手机和微信没有统一的系统「仿宋_GB2312」或 Times New Roman，直接写字体名会继续各端不一样。本合同采用<strong>把同一套字文件嵌入网站</strong>：</p>
+      <ul>
+        <li>中文：嵌入可商用、简体为大陆国标字形的开源仿宋（如不寐仿宋、朱雀仿宋同类），使各端同一份字。方正出品的「仿宋_GB2312」属商业字库，不能从电脑系统里打包上网；若甲方必须用方正原字，由甲方自行购买网页授权后交给乙方嵌入。</li>
+        <li>英文：电脑优先用本机 Times New Roman；同时嵌入与 Times 字宽接近的开源衬线体（如 Tinos / Liberation Serif），保证安卓和微信里英文也是同一套衬线，而不是被换成默认黑体。</li>
+      </ul>
+
+      <h2>第五条　不做或另议（不在 4,500 元内）</h2>
+      <ul>
+        <li>子页面 blog 封面改为可上传视频、以及新的 PDF 展示方式等，甲方已说明可后做或另加费用，本合同不含。</li>
+        <li>重建后台、迁移全部内容、全文中英双语、豆包式多屏滚动章节、定制影视级 3D 成片、抠取或仿制豆包官方模型。</li>
+        <li>3D 出模工具费（约 120 元以内、实报实销）、方正等商业字库授权费。</li>
+        <li>超出约定的结构级大改。换文案、换图、换同人照片重出一版模型，在验收前含两轮修改；再换人像或大幅改服装造型另议。</li>
+      </ul>
+
+      <h2>第六条　价款与支付</h2>
+      <table>
+        <thead><tr><th>节点</th><th>金额</th><th>条件</th></tr></thead>
+        <tbody>
+          <tr><td>定金</td><td>人民币 1,800 元（40%）</td><td>合同确认后支付。到账后乙方备份现站并开始做首页样板。</td></tr>
+          <tr><td>中期款</td><td>人民币 1,800 元（40%）</td><td>首页样板可预览、开场方向经甲方确认后支付。</td></tr>
+          <tr><td>尾款</td><td>人民币 900 元（20%）</td><td>上线验收后支付。尾款到齐后交付本期改动文件说明。</td></tr>
+        </tbody>
+      </table>
+      <p>合计人民币 <strong>4,500 元</strong>（肆仟伍佰元整）。微信转账，备注「姚骏首页定金/中期/尾款」。3D 出模工具费另计，实报实销，约 120 元以内。本期不开具发票。</p>
+
+      <h2>第七条　工期与配合</h2>
+      <p>定金到账后开工。不设硬截止日期，双方目标在 2026 年内上线。甲方应提供：宝塔或网站目录访问方式、四个标题用词与跳转栏目、本附件四视图（已收到）及必要补充照片。乙方开工前备份现站；只改首页相关文件及为实现全站暗色统一、字体嵌入所必需的全站样式，不改后台程序与文章数据。</p>
+
+      <h2>第八条　验收</h2>
+      <p>同时满足即可验收：桌面与手机首页可打开并完成开场；主标题可跳到指定旧栏目；技能卡片旋转动效可播放；3D 人物能出场、挥手、定格；全站保持暗黑主色；中英文已套用嵌入字体，并在电脑 Chrome、手机 Safari、微信内打开抽查一致；子页面原有逻辑、内容和图片比例未被改坏。</p>
+
+      <h2>第九条　其他</h2>
+      <p>甲方对提供的照片、文案、图片的版权与肖像负责。乙方保证不使用豆包官方角色资产。未尽事宜书面补充。本合同一式两份，微信确认或签字均有效。</p>
+
+      <div class="note">
+        附件为甲方提供、经 AI 整理的全身四视图，作为 3D 出模的形象依据。服装为蓝色冲锋衣、蓝上衣、棕色长裤、黄色运动鞋。
+      </div>
+
+      <h2>附件　3D 形象四视图</h2>
+      <div class="views">
+        <figure>
+          <img src="assets/3d-三视图-正面-A姿.jpg" alt="正面 A 姿" />
+          <figcaption>正面（双臂张开）</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/3d-三视图-正面-双手下垂.jpg" alt="正面双手下垂" />
+          <figcaption>正面（双手下垂）</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/3d-三视图-侧面.jpg" alt="侧面" />
+          <figcaption>侧面</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/3d-三视图-背面.jpg" alt="背面" />
+          <figcaption>背面</figcaption>
+        </figure>
+      </div>
+
+      <div class="sign">
+        <div>
+          <p><strong>甲方</strong></p>
+          <p>姓名：姚骏</p>
+          <p>确认：<span class="line"></span></p>
+          <p>日期：<span class="line"></span></p>
+        </div>
+        <div>
+          <p><strong>乙方</strong></p>
+          <p>名称：深圳市龙岗区梯泰思科技工作室</p>
+          <p>经营者：周学明</p>
+          <p>确认：<img class="stamp" src="assets/乙方签名-周学明.png" alt="周学明签字" /></p>
+          <p>日期：2026年9月21日</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</body>
+</html>

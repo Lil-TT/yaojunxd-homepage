@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>个人博客动画首页 · 效果说明与需求确认</title>
+  <style>
+    :root {
+      --ink: #1b1c1e;
+      --muted: #6b6e76;
+      --line: #e6e4df;
+      --paper: #fffdf9;
+      --soft: #f4f0e8;
+      --accent: #c45c26;
+      --navy: #2b3038;
+      --warn: #9a6b1f;
+      --ok: #2f6b4f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #ece8e1;
+      color: var(--ink);
+      line-height: 1.75;
+      font-size: 15px;
+      padding-bottom: 88px;
+    }
+    a { color: var(--accent); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 36px 18px 24px; }
+    .sheet {
+      background: var(--paper);
+      border: 1px solid #ddd8ce;
+    }
+    .hero {
+      padding: 42px 48px 36px;
+      background:
+        radial-gradient(ellipse at 20% 0%, #f8e6cf 0%, transparent 55%),
+        linear-gradient(180deg, #fffaf3 0%, var(--paper) 100%);
+      border-bottom: 1px solid var(--line);
+    }
+    .kicker {
+      font-size: 12px;
+      letter-spacing: .16em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 30px; line-height: 1.3; font-weight: 700; }
+    .lead { margin-top: 14px; font-size: 16px; color: #3d4048; max-width: 46em; }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .meta div { padding: 16px 16px 0 0; }
+    .meta b { display: block; font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: .08em; }
+    .body { padding: 36px 48px 52px; }
+    h2 {
+      font-size: 20px;
+      margin: 40px 0 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    h2:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+    h3 { font-size: 16px; margin: 22px 0 8px; }
+    p { margin: 0 0 12px; color: #2f333a; text-align: justify; }
+    ul, ol { padding-left: 1.2em; margin: 0 0 14px; }
+    li { margin: 5px 0; }
+    .note {
+      background: var(--soft);
+      border-left: 3px solid var(--accent);
+      padding: 14px 16px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .ask {
+      background: #fff8f0;
+      border: 1px solid #e8d2b6;
+      padding: 20px 22px;
+      margin: 18px 0 8px;
+    }
+    .ask h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+    .cap { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .film {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 12px 0 6px;
+    }
+    .film img { width: 100%; display: block; background: #ddd; }
+    .film figure:nth-child(1),
+    .film figure:nth-child(2) { grid-column: span 3; }
+    .film figure:nth-child(3),
+    .film figure:nth-child(4),
+    .film figure:nth-child(5) { grid-column: span 2; }
+    .film figure figcaption {
+      font-size: 11px;
+      color: var(--muted);
+      padding-top: 6px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 10px 0 16px; }
+    th, td { border: 1px solid var(--line); padding: 10px 12px; vertical-align: top; text-align: left; }
+    th { background: var(--navy); color: #fff; font-weight: 600; font-size: 12px; }
+    tr:nth-child(even) td { background: #faf7f1; }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 7px;
+      border: 1px solid currentColor;
+      margin-right: 6px;
+      letter-spacing: .04em;
+    }
+    .warn { color: var(--warn); }
+    .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+    .card {
+      border: 1px solid var(--line);
+      padding: 16px;
+      background: #fff;
+      min-height: 100%;
+    }
+    .card h3 { margin-top: 4px; }
+    .card.rec { border-color: #d8b08a; background: #fff8f0; }
+    .card.pick {
+      cursor: pointer;
+      position: relative;
+    }
+    .card.pick:hover { border-color: var(--accent); }
+    .card.pick.on {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+    .card.pick input { position: absolute; opacity: 0; pointer-events: none; }
+    .tiny { font-size: 12px; color: var(--muted); }
+    .field { margin: 16px 0; }
+    .field label.q {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .field .hint { font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+    input[type="text"], textarea, input[type="date"] {
+      width: 100%;
+      border: 1px solid #d8d2c6;
+      background: #fff;
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--ink);
+      border-radius: 0;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    input:focus, textarea:focus { outline: 2px solid #e8c39a; border-color: var(--accent); }
+    .choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .choices label {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 7px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .choices label:has(input:checked) {
+      border-color: var(--accent);
+      background: #fff8f0;
+      color: var(--accent);
+    }
+    .choices input { margin-right: 6px; }
+    .dock {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: #2b3038;
+      color: #fff;
+      z-index: 20;
+    }
+    .dock-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .dock .stat { font-size: 13px; color: #d7d2c8; flex: 1; min-width: 180px; }
+    .dock .stat b { color: #fff; }
+    .dock button {
+      border: 0;
+      background: #c45c26;
+      color: #fff;
+      font: inherit;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    .dock button.ghost {
+      background: transparent;
+      border: 1px solid #8b8f96;
+      color: #fff;
+    }
+    .dock button:hover { filter: brightness(1.08); }
+    .toast {
+      display: none;
+      position: fixed;
+      right: 18px;
+      bottom: 84px;
+      background: var(--ok);
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 13px;
+      z-index: 30;
+    }
+    .toast.show { display: block; }
+    footer {
+      margin-top: 36px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--line);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    @media (max-width: 800px) {
+      .hero, .body { padding: 24px 20px; }
+      .meta, .cards, .film { grid-template-columns: 1fr; }
+      .film figure:nth-child(n) { grid-column: auto; }
+      h1 { font-size: 24px; }
+    }
+    @media print {
+      body { background: #fff; padding-bottom: 0; }
+      .wrap { padding: 0; max-width: none; }
+      .sheet { border: 0; }
+      .dock, .toast { display: none !important; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article class="sheet">
+      <header class="hero">
+        <p class="kicker">PROJECT BRIEF · 请在本页填写后导出发给我</p>
+        <h1>个人博客动画首页<br>效果说明与需求确认</h1>
+        <p class="lead">
+          您给的参考是豆包官网 About 页（<a href="https://www.doubao.com/about" target="_blank" rel="noreferrer">doubao.com/about</a>），以及一段约 25 秒的页面录屏。
+          上面是说明，<strong>最下面是填写区</strong>。填完后点页面底部「导出回复」，会下载一个 HTML 文件，把这个文件发给我就行。
+          这一版不报价，想先听您能接受的预算和周期。
+        </p>
+        <div class="meta">
+          <div><b>文档日期</b>2026-09-19</div>
+          <div><b>文档性质</b>需求确认，非正式报价</div>
+          <div><b>参考站</b>豆包 About 开场 + 后续长滚动</div>
+        </div>
+      </header>
+
+      <div class="body">
+        <h2>1. 我们先对齐一件事</h2>
+        <p>
+          您发来的视频，不是一段独立的宣传片，而是<strong>豆包 About 页开场动画的屏幕录制</strong>（约 24.9 秒，2560×1436）。
+          视频里的 3D 人物、环绕卡片、标题逐行出现、景深虚化，与线上页面是同一套效果。
+        </p>
+        <p>
+          豆包这一页在开场之后还有很长的滚动叙事（整页大约 20 多个屏幕）。
+          您目前只给了开场 25 秒。所以先要确认：只要视频里这 25 秒，还是连后面一屏一屏往下讲的章节一起做。
+        </p>
+        <div class="note">
+          版权说明：豆包的 3D 角色、卡片插画、文案和成片不能直接用在您的博客上。
+          我们做的是<strong>同类型体验</strong>（气质、节奏、交互），不是 1:1 搬运。人物和卡片需要换成您自己的形象与内容。
+        </div>
+
+        <h2>2. 视频里的动画，拆开看是什么</h2>
+        <div class="film">
+          <figure>
+            <img src="assets/shot-01-blur.jpg" alt="开场：卡片失焦，标题浮现" />
+            <figcaption>0–2 秒 · 失焦入场</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-02-character.jpg" alt="3D 角色挥手问好" />
+            <figcaption>4–5 秒 · 角色登场</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-03-orbit.jpg" alt="角色被内容卡片环绕" />
+            <figcaption>6–9 秒 · 卡片环绕</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-04-focus.jpg" alt="镜头推近到撰写文章卡片" />
+            <figcaption>11 秒 · 镜头对焦</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/shot-05-hero.jpg" alt="开场结束落到可交互首页" />
+            <figcaption>25 秒 · 落到首页</figcaption>
+          </figure>
+        </div>
+        <p class="cap">以上截取自您提供的录屏。完整开场可概括为五段：失焦 → 角色 → 环绕 → 对焦翻牌 → 落版可滚动。</p>
+
+        <h3>2.1 开场 25 秒：看起来像实时 3D，实际是「预渲染成片」</h3>
+        <p>
+          线上页面里，这段开场对应一条事先做好的 25 秒左右静音视频。
+          人物走路、挥手、说话气泡、卡片绕行、镜头推拉，都是<strong>先在三维软件里渲染成片，再嵌进网页播放</strong>。
+          并不是网页里实时算出来的那个人。
+        </p>
+        <p>
+          所以：影视级角色，是 3D 制作；网页负责播放、衔接、跳过，以及后面的可交互层。
+          有没有现成成片、要不要自己的 3D 人物，会直接决定项目体量。
+        </p>
+
+        <h3>2.2 开场播完之后：才变成「真网页」</h3>
+        <p>25 秒结束后，视频淡出，同一构图切到可交互层。这一层用的是网页技术，不是再播一整条电影：</p>
+        <ul>
+          <li><strong>空间感卡片</strong>：用网页三维透视、位移、旋转、缩放，做出环绕和轻微悬浮。</li>
+          <li><strong>循环背景</strong>：一条更短的循环视频垫在后面，保持光晕和呼吸感。</li>
+          <li><strong>景深虚化</strong>：不在焦点的卡片做模糊和透明度，模拟镜头对焦。</li>
+          <li><strong>跳过按钮</strong>：不想看开场的人可以直接落到首页。</li>
+        </ul>
+
+        <h3>2.3 再往下滚：整页其实是一部「用滚动当时间轴」的短片</h3>
+        <p>豆包 About 在开场后还有写作 / 绘画 / 搜索 / 音乐等章节。做法是：一屏钉住，滚动不再推走画面，而是带动画进度；章节里再叠演示视频和矢量动画。整页非常长。</p>
+        <div class="note">
+          一句话：<strong>3D 成片和原创内容决定气质上限，滚动编排和手机性能决定难易。</strong>
+          前端可以做成这种感觉，但不能在没有角色、没有卡片、没有文案的情况下，凭空长得和参考一模一样。
+        </div>
+
+        <h2>3. 三种体量，请点选更接近的一种</h2>
+        <p>先不谈数字。点一张卡片即可，也可以选「介于两者之间」后在填写区补充。</p>
+
+        <form id="reply-form">
+          <div class="cards" id="direction-cards">
+            <label class="card pick">
+              <input type="radio" name="direction" value="A · 开场气质 + 博客骨架" />
+              <p class="tiny">方向 A · 轻</p>
+              <h3>开场气质 + 博客骨架</h3>
+              <ul>
+                <li>还原开场那种空间、环绕卡片、景深、大标题、可跳过</li>
+                <li>不做定制 3D 人物电影</li>
+                <li>首页 / 关于 / 文章列表 / 文章详情</li>
+                <li>电脑上完整，手机上减轻</li>
+              </ul>
+              <p class="tiny">适合：先有高级感，能正常写博客</p>
+            </label>
+            <label class="card pick rec">
+              <input type="radio" name="direction" value="B · 开场 + 滚动章节 + 博客" />
+              <p class="tiny">方向 B · 完整博客体验</p>
+              <h3>开场 + 滚动章节 + 博客</h3>
+              <ul>
+                <li>包含方向 A</li>
+                <li>再做大约 4 个一屏一屏往下讲的章节</li>
+                <li>章节里带滚动变化，可加少量演示视频</li>
+                <li>文章可做成我帮您更新，或您自己在后台发</li>
+              </ul>
+              <p class="tiny">适合：既要那种感觉，又要能长期用</p>
+            </label>
+            <label class="card pick">
+              <input type="radio" name="direction" value="C · 接近豆包 About 完整体量" />
+              <p class="tiny">方向 C · 接近参考整页</p>
+              <h3>接近豆包 About 的完整体量</h3>
+              <ul>
+                <li>需要另做 3D 开场成片（或您提供成片）</li>
+                <li>十几到二十屏滚动叙事、多段视频</li>
+                <li>文章后台、两边设备都细调</li>
+                <li>周期和配合都会明显更长</li>
+              </ul>
+              <p class="tiny">适合：明确要影视级角色、也愿意拉长周期</p>
+            </label>
+          </div>
+          <div class="choices" style="margin-bottom: 18px;">
+            <label><input type="radio" name="direction" value="介于 A 和 B" /> 介于 A 和 B</label>
+            <label><input type="radio" name="direction" value="介于 B 和 C" /> 介于 B 和 C</label>
+            <label><input type="radio" name="direction" value="还不确定，想先听建议" /> 还不确定</label>
+          </div>
+
+          <h2>4. 开工前需要您拍板的事项</h2>
+          <p>素材您这边暂时也不确定有没有。下面这些会直接影响能做到哪一步，请在第 5 节一起填。</p>
+          <table>
+            <thead>
+              <tr><th style="width:26%">事项</th><th>说明</th><th style="width:22%">状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>做开场，还是做整页</td>
+                <td>对应上面的方向 A / B / C</td>
+                <td><span class="tag warn">待您在下方填写</span></td>
+              </tr>
+              <tr>
+                <td>站点基本信息</td>
+                <td>博客名称、域名意向、一句话介绍、四个首页关键词</td>
+                <td><span class="tag warn">待提供</span></td>
+              </tr>
+              <tr>
+                <td>人物方案</td>
+                <td>要不要「一个属于您的人物」：真人照片 / 插画 / 另做 3D</td>
+                <td><span class="tag warn">待拍板</span></td>
+              </tr>
+              <tr>
+                <td>版权与原创</td>
+                <td>确认做同类型，不搬运豆包素材</td>
+                <td><span class="tag warn">待确认</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2 id="fill">5. 请在这里直接填写回复</h2>
+          <p>能填多少填多少。最想先听到的是预算和周期。填写会自动暂存在本机浏览器，关掉再开还在。</p>
+
+          <div class="ask">
+            <div class="field">
+              <label class="q" for="name">您怎么称呼 <span class="hint">方便我回消息时知道怎么叫您</span></label>
+              <input type="text" id="name" name="name" placeholder="例如：王先生 / 昵称" />
+            </div>
+            <div class="field">
+              <label class="q" for="contact">联系方式 <span class="hint">微信 / 手机 / 邮箱，任选一项</span></label>
+              <input type="text" id="contact" name="contact" placeholder="方便我收到文件后对得上人" />
+            </div>
+            <div class="field">
+              <label class="q" for="budget">1. 预算大概在哪个区间？</label>
+              <p class="hint">不用给精确数字。可以说范围、上限，或写「先按能做出来、尽量控制」。</p>
+              <textarea id="budget" name="budget" placeholder="例如：心里大概在 ×× 以内；或 先做出来，预算想尽量压"></textarea>
+            </div>
+            <div class="field">
+              <label class="q" for="timeline">2. 希望什么时候能上线？</label>
+              <p class="hint">例如：先看看、一个月内、赶某个节点、完全弹性。有硬截止日期请写上。</p>
+              <div class="choices">
+                <label><input type="radio" name="timelinePick" value="先看看，不着急" /> 先看看，不着急</label>
+                <label><input type="radio" name="timelinePick" value="一个月内希望能上" /> 一个月内希望能上</label>
+                <label><input type="radio" name="timelinePick" value="两到三个月可以" /> 两到三个月可以</label>
+                <label><input type="radio" name="timelinePick" value="有硬截止日期" /> 有硬截止日期</label>
+                <label><input type="radio" name="timelinePick" value="完全弹性" /> 完全弹性</label>
+              </div>
+              <textarea id="timeline" name="timeline" placeholder="补充具体日期或节点，没有可留空"></textarea>
+            </div>
+            <div class="field">
+              <label class="q">3. 方向已在上方点选。若要补充，写在这里</label>
+              <textarea id="directionNote" name="directionNote" placeholder="例如：先做 A，以后再加滚动章节"></textarea>
+            </div>
+            <div class="field">
+              <label class="q">4. 首页要不要「一个属于您的人物」？</label>
+              <div class="choices">
+                <label><input type="radio" name="character" value="不要人物，卡片和文字即可" /> 不要人物</label>
+                <label><input type="radio" name="character" value="用真人照片" /> 真人照片</label>
+                <label><input type="radio" name="character" value="用插画形象" /> 插画形象</label>
+                <label><input type="radio" name="character" value="想另做 3D" /> 想另做 3D</label>
+                <label><input type="radio" name="character" value="还没想好" /> 还没想好</label>
+              </div>
+              <textarea id="characterNote" name="characterNote" placeholder="补充形象来源、有没有现成照片或视频"></textarea>
+            </div>
+            <div class="field">
+              <label class="q">5. 文章是否需要您日后自己发布？</label>
+              <div class="choices">
+                <label><input type="radio" name="cms" value="需要自己在后台发文章" /> 需要后台自己发</label>
+                <label><input type="radio" name="cms" value="做好后由你按我给的稿更新即可" /> 你按我给的稿更新即可</label>
+                <label><input type="radio" name="cms" value="还不确定" /> 还不确定</label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="q">6. 语言、手机、域名</label>
+              <div class="choices">
+                <label><input type="radio" name="lang" value="只要中文" /> 只要中文</label>
+                <label><input type="radio" name="lang" value="中英都要" /> 中英都要</label>
+              </div>
+              <div class="choices">
+                <label><input type="radio" name="mobile" value="手机用轻量版即可" /> 手机用轻量版即可</label>
+                <label><input type="radio" name="mobile" value="手机也希望尽量接近电脑动画" /> 手机也希望尽量接近电脑</label>
+              </div>
+              <div class="choices">
+                <label><input type="radio" name="host" value="已有域名和服务器" /> 已有域名和服务器</label>
+                <label><input type="radio" name="host" value="还没有，上线方式后定" /> 还没有，上线后定</label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="q" for="site">7. 博客名、关键词、现有素材</label>
+              <p class="hint">有就写。没有请写「先用占位」或说明缺什么。</p>
+              <textarea id="site" name="site" placeholder="博客名：&#10;四个关键词：&#10;现有图片 / 文章 / 成片：&#10;是否接受先用占位："></textarea>
+            </div>
+            <div class="field">
+              <label class="q">8. 版权确认</label>
+              <div class="choices">
+                <label><input type="radio" name="copyright" value="同意做同类型，不搬运豆包素材" /> 同意做同类型，不搬运豆包素材</label>
+                <label><input type="radio" name="copyright" value="还想再确认" /> 还想再确认</label>
+              </div>
+            </div>
+            <div class="field">
+              <label class="q" for="extra">其他想说的</label>
+              <textarea id="extra" name="extra" placeholder="例如必须有的功能、不能接受的做法、参考站除豆包以外还有没有"></textarea>
+            </div>
+          </div>
+
+          <div class="note">
+            填完后点底部<strong>导出回复</strong>，把下载下来的 HTML 文件发给我。
+            也可以点<strong>复制回复文本</strong>，直接粘到微信。
+            我会按您填的预算和周期，给出对得上您接受程度的范围和报价。
+          </div>
+        </form>
+
+        <footer>
+          本页仅供方向确认，不含报价 · 填写只存在您自己的浏览器里，点导出后才会生成要发给我的文件 · 2026-09-19
+        </footer>
+      </div>
+    </article>
+  </div>
+
+  <div class="dock">
+    <div class="dock-inner">
+      <div class="stat">已填 <b id="fill-count">0</b> / 8 项关键问答 · 可随时导出，不必全填</div>
+      <button type="button" class="ghost" id="btn-copy">复制回复文本</button>
+      <button type="button" id="btn-export">导出回复 HTML</button>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var KEY = "blog-anim-reply-v1";
+      var form = document.getElementById("reply-form");
+      var toastEl = document.getElementById("toast");
+      var QUESTIONS = [
+        { key: "name", label: "称呼" },
+        { key: "contact", label: "联系方式" },
+        { key: "budget", label: "1. 预算区间" },
+        { key: "timelinePick", label: "2. 上线周期（选项）" },
+        { key: "timeline", label: "2. 上线周期（补充）" },
+        { key: "direction", label: "3. 方向" },
+        { key: "directionNote", label: "3. 方向补充" },
+        { key: "character", label: "4. 人物方案" },
+        { key: "characterNote", label: "4. 人物补充" },
+        { key: "cms", label: "5. 文章发布方式" },
+        { key: "lang", label: "6. 语言" },
+        { key: "mobile", label: "6. 手机" },
+        { key: "host", label: "6. 域名服务器" },
+        { key: "site", label: "7. 博客名 / 关键词 / 素材" },
+        { key: "copyright", label: "8. 版权确认" },
+        { key: "extra", label: "其他" }
+      ];
+      var CORE = ["budget", "timelinePick", "direction", "character", "cms", "site", "copyright", "name"];
+
+      function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+      }
+
+      function collect() {
+        var data = {};
+        QUESTIONS.forEach(function (q) {
+          var el = form.elements[q.key];
+          if (!el) return;
+          if (el.length && el[0] && el[0].type === "radio") {
+            var picked = form.querySelector('[name="' + q.key + '"]:checked');
+            data[q.key] = picked ? picked.value : "";
+          } else {
+            data[q.key] = (el.value || "").trim();
+          }
+        });
+        return data;
+      }
+
+      function apply(data) {
+        if (!data) return;
+        QUESTIONS.forEach(function (q) {
+          var el = form.elements[q.key];
+          if (!el || data[q.key] == null) return;
+          if (el.length && el[0] && el[0].type === "radio") {
+            Array.prototype.forEach.call(form.querySelectorAll('[name="' + q.key + '"]'), function (r) {
+              if (r.value === data[q.key]) r.checked = true;
+            });
+          } else {
+            el.value = data[q.key];
+          }
+        });
+        syncCards();
+        updateCount();
+      }
+
+      function syncCards() {
+        document.querySelectorAll(".card.pick").forEach(function (card) {
+          var input = card.querySelector('input[name="direction"]');
+          card.classList.toggle("on", !!(input && input.checked));
+        });
+      }
+
+      function updateCount() {
+        var data = collect();
+        var n = CORE.filter(function (k) { return !!data[k]; }).length;
+        document.getElementById("fill-count").textContent = n;
+      }
+
+      function save() {
+        try { localStorage.setItem(KEY, JSON.stringify(collect())); } catch (e) {}
+        updateCount();
+        syncCards();
+      }
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function blank(v) { return v ? v : "（未填）"; }
+
+      function asText(data) {
+        var lines = [
+          "个人博客动画首页 · 甲方回复",
+          "导出时间：" + new Date().toLocaleString("zh-CN"),
+          ""
+        ];
+        QUESTIONS.forEach(function (q) {
+          lines.push("【" + q.label + "】");
+          lines.push(blank(data[q.key]));
+          lines.push("");
+        });
+        return lines.join("\n");
+      }
+
+      function asHtml(data) {
+        var rows = QUESTIONS.map(function (q) {
+          var val = escapeHtml(blank(data[q.key])).replace(/\n/g, "<br>");
+          return "<tr><th>" + escapeHtml(q.label) + "</th><td>" + val + "</td></tr>";
+        }).join("");
+        return "<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>博客动画 · 甲方回复</title><style>body{font-family:PingFang SC,Hiragino Sans GB,Microsoft YaHei,sans-serif;background:#ece8e1;margin:0;padding:32px 16px;color:#1b1c1e;line-height:1.7} .sheet{max-width:760px;margin:0 auto;background:#fffdf9;border:1px solid #ddd8ce;padding:36px 40px} h1{font-size:24px;margin:0 0 8px} .sub{color:#6b6e76;font-size:13px;margin-bottom:24px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #e6e4df;padding:10px 12px;vertical-align:top;text-align:left} th{width:28%;background:#f4f0e8;font-weight:600}</style></head><body><div class=\"sheet\"><h1>个人博客动画首页 · 甲方回复</h1><p class=\"sub\">导出时间：" + escapeHtml(new Date().toLocaleString("zh-CN")) + " · 请把本文件发给制作方</p><table>" + rows + "</table></div></body></html>";
+      }
+
+      function downloadHtml() {
+        var data = collect();
+        save();
+        var blob = new Blob([asHtml(data)], { type: "text/html;charset=utf-8" });
+        var a = document.createElement("a");
+        var who = data.name ? "-" + data.name.replace(/[\\/:*?\"<>|]/g, "") : "";
+        a.href = URL.createObjectURL(blob);
+        a.download = "博客动画-需求回复" + who + ".html";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+        toast("已下载回复文件，请发给我");
+      }
+
+      function copyText() {
+        var text = asText(collect());
+        save();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            toast("已复制，可直接粘到微信发给我");
+          }).catch(fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
+        function fallbackCopy() {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); toast("已复制，可直接粘到微信发给我"); }
+          catch (e) { toast("复制失败，请改用导出 HTML"); }
+          ta.remove();
+        }
+      }
+
+      try {
+        var saved = localStorage.getItem(KEY);
+        if (saved) apply(JSON.parse(saved));
+      } catch (e) {}
+
+      form.addEventListener("input", save);
+      form.addEventListener("change", save);
+      document.getElementById("btn-export").addEventListener("click", downloadHtml);
+      document.getElementById("btn-copy").addEventListener("click", copyText);
+      updateCount();
+      syncCards();
+    })();
+  </script>
+</body>
+</html>
