@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>姚骏 · 首页开场样板（未上线）</title>
+  <link rel="stylesheet" href="css/home-anim.css" />
+</head>
+<body>
+  <header class="bar">
+    <img src="assets/logo.png" alt="logo" />
+    <nav>
+      <a href="https://www.yaojunxd.com/?me/">个人简介</a>
+      <a href="https://www.yaojunxd.com/?contest/">学科竞赛</a>
+      <a href="https://www.yaojunxd.com/?science/">科研经历</a>
+      <a href="https://www.yaojunxd.com/?ip/">知识产权</a>
+      <a href="https://www.yaojunxd.com/?contact/">在线留言</a>
+    </nav>
+  </header>
+
+  <button class="skip" type="button">跳过动画</button>
+  <button class="replay" type="button" hidden>重播开场</button>
+
+  <main class="stage">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-3d" aria-hidden="true">
+      <canvas id="hero-canvas"></canvas>
+    </div>
+    <p class="hello">你好</p>
+
+    <figure class="card pos-1" data-topic="science" data-href="https://www.yaojunxd.com/?science/" style="--tilt:-7deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/1-science.png" alt="" />
+        <div class="card-frame"><img src="assets/cards/1-science.png" alt="科研经历" /></div>
+      </div>
+    </figure>
+    <figure class="card pos-2" data-topic="contest" data-href="https://www.yaojunxd.com/?contest/" style="--tilt:5deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/2-contest.jpg" alt="" />
+        <div class="card-frame"><img src="assets/cards/2-contest.jpg" alt="学科竞赛" /></div>
+      </div>
+    </figure>
+    <figure class="card pos-3" data-topic="me" data-href="https://www.yaojunxd.com/?me/" style="--tilt:6deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/3-me.jpg" alt="" />
+        <div class="card-frame"><img src="assets/cards/3-me.jpg" alt="个人简介" /></div>
+      </div>
+    </figure>
+    <figure class="card pos-4" data-topic="science" data-href="https://www.yaojunxd.com/?science/" style="--tilt:4deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/4-science.jpg" alt="" />
+        <div class="card-frame"><img src="assets/cards/4-science.jpg" alt="科研经历" /></div>
+      </div>
+    </figure>
+    <figure class="card pos-5" data-topic="contest" data-href="https://www.yaojunxd.com/?contest/" style="--tilt:-6deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/5-contest.png" alt="" />
+        <div class="card-frame"><img src="assets/cards/5-contest.png" alt="学科竞赛" /></div>
+      </div>
+    </figure>
+    <figure class="card pos-6" data-topic="me" data-href="https://www.yaojunxd.com/?me/" style="--tilt:-5deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/6-me.jpg" alt="" />
+        <div class="card-frame"><img src="assets/cards/6-me.jpg" alt="个人简介" /></div>
+      </div>
+    </figure>
+    <figure class="card pos-7" data-topic="ip" data-href="https://www.yaojunxd.com/?ip/" style="--tilt:-8deg">
+      <div class="card-float">
+        <img class="card-blur" src="assets/cards/7-ip.jpg" alt="" />
+        <div class="card-frame"><img src="assets/cards/7-ip.jpg" alt="知识产权" /></div>
+      </div>
+    </figure>
+
+    <nav class="titles">
+      <a href="https://www.yaojunxd.com/?me/" data-topic="me">个人简介</a>
+      <a href="https://www.yaojunxd.com/?contest/" data-topic="contest">学科竞赛</a>
+      <a href="https://www.yaojunxd.com/?science/" data-topic="science">科研经历</a>
+      <a href="https://www.yaojunxd.com/?ip/" data-topic="ip">知识产权</a>
+    </nav>
+  </main>
+
+  <p class="mark">首页开场样板 · 未改线上 · 3D 为流程占位，正式角色另出</p>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="js/home-anim.js"></script>
+</body>
+</html>

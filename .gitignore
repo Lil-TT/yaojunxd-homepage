@@ -16,3 +16,14 @@ refs/**/*.webm
 # redundant HTML screenshots
 docs/*.png
 
+# site dumps (sessions + 400MB+; keep local only)
+backups/
+
+# client drop files / local preview binaries
+preview/*.zip
+preview/*.png
+preview/截屏*.png
+preview/assets/ordered/
+preview/assets/*.glb
+preview/assets/spiderman.glb
+

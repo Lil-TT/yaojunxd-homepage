@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>首页开场样板 · 使用说明</title>
+  <style>
+    :root { --ink:#1b1c1e; --muted:#6b6e76; --line:#e6e4df; --navy:#2b3038; --ok:#2f6b4f; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:#ece8e1; color:var(--ink); line-height:1.75; font-size:15px; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 28px 14px 64px; }
+    .sheet { background:#fffdf9; border: 1px solid #ddd8ce; padding: 36px 40px 44px; }
+    h1 { font-size: 22px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
+    .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+    h2 { font-size: 16px; margin: 22px 0 8px; }
+    p, li { margin-bottom: 8px; }
+    ul { padding-left: 1.25em; }
+    a { color: #035aa6; }
+    .note { background: #f4f0e8; padding: 10px 12px; margin: 12px 0; font-size: 14px; }
+    code { font-size: 13px; background: #eeeae3; padding: 1px 5px; }
+    .ok { color: var(--ok); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article class="sheet">
+      <h1>yaojunxd.com 首页开场<br>样板 v0 · 使用说明</h1>
+      <p class="sub">2026年9月22日　·　只给甲方本机预览　·　不会改线上网站</p>
+
+      <p class="ok">这是开场气质的第一版：颜色、卡片、标题跳转、跳过/重播已经接上。3D 角色位已接通，正式形象按「动漫 / Memoji」另出，不会把占位角色做到 yaojunxd.com。</p>
+
+      <h2>怎么打开</h2>
+      <ol>
+        <li>解压本包，进入 <code>preview</code> 文件夹。</li>
+        <li>不要直接双击 HTML（3D 和模块脚本在文件协议下会失败）。</li>
+        <li>Mac：打开「终端」，输入：<br>
+          <code>cd 解压后的目录/preview</code><br>
+          <code>python3 -m http.server 8766</code></li>
+        <li>Windows：在该文件夹地址栏输入 <code>cmd</code> 回车，再运行：<br>
+          <code>python -m http.server 8766</code></li>
+        <li>浏览器打开 <a href="http://127.0.0.1:8766/">http://127.0.0.1:8766/</a></li>
+      </ol>
+      <p>没有 Python 时，也可以把整个 <code>preview</code> 拖进 VS Code / Cursor，用 Live Server 打开 <code>index.html</code>。</p>
+
+      <h2>这一版能看什么</h2>
+      <ul>
+        <li>背景 <code>#171717</code>，标题蓝 <code>#035AA6</code></li>
+        <li>你提供的技能图：圆角、倾斜、底下高斯模糊</li>
+        <li>开场：角色圆头像 → 全身 → 卡片散开 → 四个标题逐行对焦 → 落版可点</li>
+        <li>点「个人简介 / 学科竞赛 / 科研经历 / 知识产权」进入现网站对应栏目</li>
+        <li>右下角「跳过动画」；播完后「重播开场」</li>
+      </ul>
+
+      <h2>还没做、不必担心</h2>
+      <ul>
+        <li>正式 3D 形象（按你的照片做成轻量动漫角色）还在出模，这一版是流程占位。</li>
+        <li>手机单独构图、嵌入仿宋 / Times 字体，下一轮。</li>
+        <li>线上 yaojunxd.com 首页一行都没改。</li>
+      </ul>
+
+      <div class="note">
+        请先看气质和节奏：颜色对不对、卡片角度和模糊够不够、四个标题对不对。回复里直接标「改这里」即可。样板你点头之前，我们不会嵌进正式站。
+      </div>
+
+      <p style="font-size:12.5px;color:var(--muted)">制作：深圳市龙岗区梯泰思科技工作室（周学明）</p>
+    </article>
+  </div>
+</body>
+</html>

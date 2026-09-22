@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>挥手测试 · Mixamo 骨骼</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #171717; color: #d7dde6; font-family: sans-serif; }
+    #c { display: block; width: 100%; height: 100%; }
+    .note {
+      position: fixed; left: 20px; bottom: 18px; font-size: 12px; line-height: 1.6;
+      color: #8b93a0; max-width: 520px;
+    }
+    .note a { color: #4d9adf; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <p class="note">
+    本页只做技术验证，不能上 yaojunxd.com（蜘蛛侠是漫威形象）。<br />
+    模型已绑 Mixamo 骨，但 GLB 里没有动画。这里用 Three.js 转左臂骨骼做挥手。<br />
+    网格 CC-BY-4.0 · <a href="https://sketchfab.com/3d-models/the-amazing-spider-man-2-spider-man-def66432d0434cceb2e2ad260a94b5af">fredbear1211 / Sketchfab</a>
+  </p>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const canvas = document.querySelector("#c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x171717);
+
+    const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 1.2, 4.2);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, 1.0, 0);
+    controls.enableDamping = true;
+
+    scene.add(new THREE.HemisphereLight(0xb7c8e0, 0x171717, 1.1));
+    const key = new THREE.DirectionalLight(0xffffff, 1.35);
+    key.position.set(2.2, 3.4, 2.8);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0x035aa6, 0.45);
+    fill.position.set(-2.5, 1.2, -1.5);
+    scene.add(fill);
+
+    const findBone = (root, key) => {
+      let bone = null;
+      root.traverse((obj) => {
+        if (!bone && obj.isBone && obj.name.includes(key)) bone = obj;
+      });
+      return bone;
+    };
+
+    const { scene: model } = await new GLTFLoader().loadAsync("assets/spiderman.glb");
+    scene.add(model);
+
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3()).length();
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    model.position.y += box.getSize(new THREE.Vector3()).y * 0.08;
+    camera.position.multiplyScalar(size * 0.28);
+    controls.target.copy(model.position).add(new THREE.Vector3(0, 0.2, 0));
+    controls.update();
+
+    const arm = findBone(model, "LeftArm");
+    const forearm = findBone(model, "LeftForeArm");
+    const hand = findBone(model, "LeftHand");
+    if (!arm || !forearm) throw new Error("未找到 Mixamo 左臂骨骼");
+
+    const qArm = arm.quaternion.clone();
+    const qFore = forearm.quaternion.clone();
+    const qHand = hand ? hand.quaternion.clone() : null;
+    const e = new THREE.Euler();
+    const q = new THREE.Quaternion();
+
+    const clock = new THREE.Clock();
+    const loop = () => {
+      const t = clock.getElapsedTime();
+      const wave = Math.sin(t * 7);
+
+      arm.quaternion.copy(qArm);
+      e.set(-1.05, 0.15, 0.35 + wave * 0.12);
+      arm.quaternion.multiply(q.setFromEuler(e));
+
+      forearm.quaternion.copy(qFore);
+      e.set(0, 0, 0.9 + wave * 0.55);
+      forearm.quaternion.multiply(q.setFromEuler(e));
+
+      if (hand && qHand) {
+        hand.quaternion.copy(qHand);
+        e.set(0, 0, wave * 0.25);
+        hand.quaternion.multiply(q.setFromEuler(e));
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    };
+    loop();
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>

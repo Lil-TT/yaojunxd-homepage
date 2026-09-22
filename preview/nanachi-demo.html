@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>动画测试 · Nanachi GLB</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #171717; color: #d7dde6; font-family: sans-serif; }
+    #c { display: block; width: 100%; height: 100%; }
+    .hud {
+      position: fixed; left: 20px; bottom: 18px; font-size: 13px; line-height: 1.65;
+      color: #8b93a0; max-width: 540px;
+    }
+    .hud strong { color: #e8eef6; }
+    .hud a { color: #4d9adf; }
+    button {
+      margin-right: 8px; margin-top: 8px;
+      background: #035aa6; color: #fff; border: 0; border-radius: 6px;
+      padding: 6px 12px; font: inherit; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="hud">
+    <div>本页只做技术验证，不能上 yaojunxd.com。</div>
+    <div>片段：<strong id="clip">读取中…</strong>　时长 <strong id="dur">—</strong>s</div>
+    <button id="play" type="button">播放 / 暂停</button>
+    <button id="restart" type="button">重播</button>
+    <div>CC-BY-4.0 · <a href="https://sketchfab.com/3d-models/nanachi-made-in-abyss-081b710e909f4172af5b47ff7cba33e3">DimitriyArts / Sketchfab</a></div>
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const canvas = document.querySelector("#c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x171717);
+
+    const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.05, 200);
+    camera.position.set(0, 1.1, 3.6);
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+
+    scene.add(new THREE.HemisphereLight(0xc9d6e8, 0x171717, 1.15));
+    const key = new THREE.DirectionalLight(0xffffff, 1.2);
+    key.position.set(2, 3.2, 2.4);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0x035aa6, 0.4);
+    fill.position.set(-2.2, 1, -1.4);
+    scene.add(fill);
+
+    const gltf = await new GLTFLoader().loadAsync("assets/nanachi.glb");
+    const model = gltf.scene;
+    scene.add(model);
+
+    const box = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+    model.position.sub(center);
+    model.position.y += size.y * 0.02;
+    const dist = Math.max(size.x, size.y, size.z) * 1.7;
+    camera.position.set(0, size.y * 0.15, dist);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    const mixer = new THREE.AnimationMixer(model);
+    const clip = gltf.animations[0];
+    const action = mixer.clipAction(clip);
+    action.reset();
+    action.setLoop(THREE.LoopRepeat, Infinity);
+    action.play();
+
+    document.querySelector("#clip").textContent = clip.name || "（未命名）";
+    document.querySelector("#dur").textContent = clip.duration.toFixed(2);
+
+    document.querySelector("#play").onclick = () => {
+      action.paused = !action.paused;
+    };
+    document.querySelector("#restart").onclick = () => {
+      action.reset().play();
+    };
+
+    const clock = new THREE.Clock();
+    const loop = () => {
+      mixer.update(clock.getDelta());
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    };
+    loop();
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>
