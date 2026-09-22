@@ -14,7 +14,7 @@
     .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
     h2 { font-size: 16px; margin: 22px 0 8px; }
     p, li { margin-bottom: 8px; }
-    ul { padding-left: 1.25em; }
+    ol, ul { padding-left: 1.25em; }
     a { color: #035aa6; }
     .note { background: #f4f0e8; padding: 10px 12px; margin: 12px 0; font-size: 14px; }
     code { font-size: 13px; background: #eeeae3; padding: 1px 5px; }
@@ -25,41 +25,50 @@
   <div class="wrap">
     <article class="sheet">
       <h1>yaojunxd.com 首页开场<br>样板 v0 · 使用说明</h1>
-      <p class="sub">2026年9月22日　·　只给甲方本机预览　·　不会改线上网站</p>
+      <p class="sub">2026年9月22日　·　本机预览含 3D　·　不会改线上网站</p>
 
-      <p class="ok">这是开场气质的第一版：颜色、卡片、标题跳转、跳过/重播已经接上。3D 角色位已接通，正式形象按「动漫 / Memoji」另出，不会把占位角色做到 yaojunxd.com。</p>
+      <p class="ok">请用浏览器打开首页，刷新即可看到完整开场（含 3D 角色）。这版角色是流程占位，方便你先评气质和节奏；正式形象会按你的照片做成轻量动漫 / Memoji，不会把占位角色做到 yaojunxd.com。</p>
 
-      <h2>怎么打开</h2>
+      <h2>怎么打开（必须用本地服务器）</h2>
+      <p>不要直接双击 <code>index.html</code>。3D 模型需要通过 http 加载，双击会看不到角色。</p>
       <ol>
-        <li>解压本包，进入 <code>preview</code> 文件夹。</li>
-        <li>不要直接双击 HTML（3D 和模块脚本在文件协议下会失败）。</li>
+        <li>解压后进入带 <code>index.html</code> 的文件夹（有的压缩软件会多一层目录）。</li>
         <li>Mac：打开「终端」，输入：<br>
-          <code>cd 解压后的目录/preview</code><br>
+          <code>cd 解压后的文件夹</code><br>
           <code>python3 -m http.server 8766</code></li>
         <li>Windows：在该文件夹地址栏输入 <code>cmd</code> 回车，再运行：<br>
           <code>python -m http.server 8766</code></li>
         <li>浏览器打开 <a href="http://127.0.0.1:8766/">http://127.0.0.1:8766/</a></li>
       </ol>
-      <p>没有 Python 时，也可以把整个 <code>preview</code> 拖进 VS Code / Cursor，用 Live Server 打开 <code>index.html</code>。</p>
+      <p>没有 Python 时，把整个文件夹拖进 VS Code / Cursor，用 Live Server 打开 <code>index.html</code> 也可以。</p>
+      <p>第一次加载约 16MB 模型，Wi‑Fi 下等一两秒属正常。右下角可「跳过动画」，播完可「重播开场」。</p>
 
       <h2>这一版能看什么</h2>
       <ul>
         <li>背景 <code>#171717</code>，标题蓝 <code>#035AA6</code></li>
         <li>你提供的技能图：圆角、倾斜、底下高斯模糊</li>
-        <li>开场：角色圆头像 → 全身 → 卡片散开 → 四个标题逐行对焦 → 落版可点</li>
+        <li>开场：圆头像 → 3D 挥手 → 卡片散开 → 四个标题逐行对焦 → 落版可点</li>
         <li>点「个人简介 / 学科竞赛 / 科研经历 / 知识产权」进入现网站对应栏目</li>
-        <li>右下角「跳过动画」；播完后「重播开场」</li>
       </ul>
+
+      <h2>为什么用实时 3D，而不是豆包那种开场视频</h2>
+      <p>豆包 About 的开场是预渲染成片，播完再切到网页。我们改成网页里直接播 GLB：</p>
+      <ul>
+        <li>同一套人物以后可以单独拿出来，做悬停、对话框、点头等交互，不用每改一次就重渲一条视频。</li>
+        <li>开场要加动作（张臂、扑向镜头），往模型里加一段 animation 即可，前端按名字播放。</li>
+      </ul>
+      <p>这一版占位模目前只有挥手。正式模会补齐张臂、扑镜，并换成你的动漫形象。</p>
 
       <h2>还没做、不必担心</h2>
       <ul>
-        <li>正式 3D 形象（按你的照片做成轻量动漫角色）还在出模，这一版是流程占位。</li>
+        <li>正式 3D 形象仍在出模。</li>
         <li>手机单独构图、嵌入仿宋 / Times 字体，下一轮。</li>
         <li>线上 yaojunxd.com 首页一行都没改。</li>
       </ul>
 
       <div class="note">
-        请先看气质和节奏：颜色对不对、卡片角度和模糊够不够、四个标题对不对。回复里直接标「改这里」即可。样板你点头之前，我们不会嵌进正式站。
+        请先看气质和节奏：颜色、卡片角度和模糊、标题对焦、3D 出场是否顺。回复里直接标「改这里」即可。样板你点头之前，我们不会嵌进正式站。<br>
+        占位模型来源：CC-BY-4.0 · <a href="https://sketchfab.com/3d-models/nanachi-made-in-abyss-081b710e909f4172af5b47ff7cba33e3">DimitriyArts / Sketchfab</a>，仅用于本机看流程。
       </div>
 
       <p style="font-size:12.5px;color:var(--muted)">制作：深圳市龙岗区梯泰思科技工作室（周学明）</p>

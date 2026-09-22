@@ -225,6 +225,8 @@ body::before {
   max-width: 52vw;
 }
 
+.mark a { color: #7eb6e8; }
+
 @media (max-width: 900px) {
   .bar nav { display: none; }
   .hello { margin-left: -180px; top: 32%; font-size: 13px; }

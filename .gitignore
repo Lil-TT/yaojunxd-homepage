@@ -25,5 +25,7 @@ preview/*.png
 preview/截屏*.png
 preview/assets/ordered/
 preview/assets/*.glb
+!preview/assets/character.glb
 preview/assets/spiderman.glb
+preview/assets/nanachi.glb
 
