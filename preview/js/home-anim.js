@@ -5,9 +5,14 @@ const titles = gsap.utils.toArray(".titles a");
 const skip = document.querySelector(".skip");
 const replay = document.querySelector(".replay");
 const stage = document.querySelector(".stage");
+const menuBtn = document.querySelector(".menu-btn");
+const menuPanel = document.querySelector(".menu-panel");
+const menuClose = document.querySelector(".menu-close");
 const params = new URLSearchParams(location.search);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isMobile = matchMedia("(max-width: 900px)").matches;
+
+const deg = (el, name) => parseFloat(getComputedStyle(el).getPropertyValue(name)) || 0;
 
 const fromCenter = (el) => {
   const r = el.getBoundingClientRect();
@@ -17,22 +22,28 @@ const fromCenter = (el) => {
   };
 };
 
-const tiltOf = (el) => parseFloat(getComputedStyle(el).getPropertyValue("--tilt")) || 0;
-
 cards.forEach((card) => {
   const origin = fromCenter(card);
+  const float = card.querySelector(".card-float");
   gsap.set(card, {
     x: origin.x,
     y: origin.y,
     scale: 0.22,
     autoAlpha: 0,
-    rotation: tiltOf(card),
-    filter: "blur(16px)",
+    filter: "blur(12px)",
+  });
+  gsap.set(float, {
+    rotationX: deg(card, "--rx") + 38,
+    rotationY: deg(card, "--ry") + (deg(card, "--ry") >= 0 ? 42 : -42),
+    rotation: deg(card, "--tilt"),
+    z: -120,
   });
 });
 gsap.set(titles, { autoAlpha: 0, y: 18 });
 gsap.set(".hello", { autoAlpha: 0, y: 8 });
 gsap.set(".hero-3d", { autoAlpha: 0 });
+gsap.set(".hero-wash", { autoAlpha: 0 });
+gsap.set(".hero-halo", { autoAlpha: 0 });
 gsap.set(".hero-glow", { autoAlpha: 0, scale: 0.7 });
 
 const idleTweens = [];
@@ -45,12 +56,12 @@ const startIdle = () => {
   cards.forEach((card, i) => {
     idleTweens.push(
       gsap.to(card.querySelector(".card-float"), {
-        y: i % 2 ? 9 : -9,
-        duration: 2.6 + (i % 3) * 0.35,
+        y: i % 2 ? 8 : -8,
+        duration: 2.8 + (i % 3) * 0.3,
         yoyo: true,
         repeat: -1,
         ease: "sine.inOut",
-        delay: i * 0.18,
+        delay: i * 0.16,
       })
     );
   });
@@ -61,10 +72,10 @@ const dimOthers = (topic) => {
     const on = card.dataset.topic === topic;
     card.classList.toggle("is-focus", on);
     gsap.to(card, {
-      scale: on ? 1.12 : 0.9,
-      filter: on ? "blur(0px)" : "blur(7px)",
-      autoAlpha: on ? 1 : 0.38,
-      duration: 0.7,
+      scale: on ? 1.1 : 0.92,
+      filter: on ? "blur(0px)" : "blur(6px)",
+      autoAlpha: on ? 1 : 0.4,
+      duration: 0.55,
       ease: "power2.out",
       overwrite: "auto",
     });
@@ -72,26 +83,32 @@ const dimOthers = (topic) => {
   titles.forEach((t) => {
     const on = t.dataset.topic === topic;
     t.classList.toggle("is-on", on);
+    t.classList.toggle("is-hot", on && stage.classList.contains("is-live"));
     if (on) t.classList.add("is-shown");
   });
 };
 
-const settle = () => {
+const clearFocus = () => {
   cards.forEach((card) => card.classList.remove("is-focus"));
   titles.forEach((t) => {
-    t.classList.remove("is-on");
+    t.classList.remove("is-on", "is-hot");
     t.classList.add("is-shown");
   });
   gsap.to(cards, {
     scale: 1,
     filter: "blur(0px)",
     autoAlpha: 1,
-    duration: 0.7,
+    duration: 0.55,
     ease: "power2.out",
     overwrite: "auto",
   });
+};
+
+const settle = () => {
+  clearFocus();
   gsap.to(titles, { autoAlpha: 1, y: 0, duration: 0.35, overwrite: "auto" });
   stage.classList.add("is-live");
+  document.body.classList.add("is-settled");
   skip.hidden = true;
   replay.hidden = false;
   startIdle();
@@ -111,16 +128,33 @@ let intro;
 
 const landNow = () => {
   if (intro) intro.pause();
-  gsap.killTweensOf([cards, titles, ".hero-3d", ".hero-glow", ".hello"]);
+  gsap.killTweensOf([cards, titles, ".hero-3d", ".hero-wash", ".hero-halo", ".hero-glow", ".hello"]);
+  cards.forEach((card) => {
+    const float = card.querySelector(".card-float");
+    gsap.set(card, { x: 0, y: 0, scale: 1, autoAlpha: 1, filter: "blur(0px)" });
+    gsap.set(float, {
+      rotationX: deg(card, "--rx"),
+      rotationY: deg(card, "--ry"),
+      rotation: deg(card, "--tilt"),
+      z: 0,
+    });
+  });
   if (hero) {
     hero.pause();
     gsap.set(".hero-3d", { autoAlpha: 0, clipPath: "circle(0px at 50% 46%)" });
+    gsap.set(".hero-wash", { autoAlpha: 0, clipPath: "circle(0px at 50% 46%)" });
+    gsap.set(".hero-halo", { autoAlpha: 0 });
     gsap.set(".hero-glow", { autoAlpha: 0 });
   }
   gsap.set(".hello", { autoAlpha: 0 });
-  gsap.set(cards, { x: 0, y: 0, scale: 1, autoAlpha: 1, filter: "blur(0px)" });
   gsap.set(titles, { autoAlpha: 1, y: 0 });
   settle();
+};
+
+const setMenu = (open) => {
+  document.body.classList.toggle("menu-open", open);
+  menuBtn.setAttribute("aria-expanded", String(open));
+  menuPanel.setAttribute("aria-hidden", String(!open));
 };
 
 const buildIntro = () => {
@@ -131,15 +165,22 @@ const buildIntro = () => {
   });
 
   const hole = { r: 0 };
-  const heroEl = document.querySelector(".hero-3d");
   const applyHole = () => {
-    heroEl.style.clipPath = `circle(${hole.r}px at 50% 46%)`;
+    document.querySelector(".hero-3d").style.clipPath = `circle(${hole.r}px at 50% 46%)`;
+    document.querySelector(".hero-wash").style.clipPath = `circle(${hole.r * 1.22}px at 50% 46%)`;
+    const halo = document.querySelector(".hero-halo");
+    const d = hole.r * 2;
+    halo.style.width = `${d}px`;
+    halo.style.height = `${d}px`;
+    halo.style.margin = `${-hole.r}px 0 0 ${-hole.r}px`;
   };
-  const circle = isMobile ? 96 : 132;
+  const circle = isMobile ? 102 : 148;
   const full = Math.hypot(innerWidth, innerHeight) * 0.7;
 
   tl.addLabel("circle", 0)
     .to(".hero-3d", { autoAlpha: 1, duration: 0.35 }, "circle")
+    .to(".hero-wash", { autoAlpha: 1, duration: 0.5 }, "circle")
+    .to(".hero-halo", { autoAlpha: 1, duration: 0.5 }, "circle")
     .to(hole, { r: circle, duration: 0.95, ease: "power2.out", onUpdate: applyHole }, "circle")
     .to(".hero-glow", { autoAlpha: 1, scale: 1, duration: 0.9 }, "circle")
     .add(() => hero && hero.play(), "circle+=0.45")
@@ -150,6 +191,8 @@ const buildIntro = () => {
     .addLabel("full", 2.2)
     .to(hole, { r: full, duration: 1.35, ease: "power2.inOut", onUpdate: applyHole }, "full")
     .to(".hero-glow", { autoAlpha: 0, scale: 1.8, duration: 0.85 }, "full")
+    .to(".hero-wash", { autoAlpha: 0, duration: 0.9 }, "full+=0.35")
+    .to(".hero-halo", { autoAlpha: 0, duration: 0.7 }, "full+=0.25")
     .add(() => {
       if (!hero) return;
       gsap.to(hero.cam, {
@@ -173,8 +216,20 @@ const buildIntro = () => {
         scale: 1,
         autoAlpha: 1,
         filter: "blur(0px)",
-        duration: 1.15,
-        stagger: 0.07,
+        duration: 1.2,
+        stagger: 0.08,
+        ease: "power3.out",
+      },
+      "orbit"
+    )
+    .to(
+      ".card-float",
+      {
+        z: 0,
+        rotationX: (i) => deg(cards[i], "--rx"),
+        rotationY: (i) => deg(cards[i], "--ry"),
+        duration: 1.25,
+        stagger: 0.08,
         ease: "power3.out",
       },
       "orbit"
@@ -235,6 +290,24 @@ const boot = async () => {
 
   skip.addEventListener("click", landNow);
   replay.addEventListener("click", () => location.reload());
+  menuBtn.addEventListener("click", () => setMenu(!document.body.classList.contains("menu-open")));
+  menuClose.addEventListener("click", () => setMenu(false));
+  menuPanel.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setMenu(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setMenu(false);
+  });
+
+  titles.forEach((title) => {
+    title.addEventListener("mouseenter", () => {
+      if (!stage.classList.contains("is-live")) return;
+      dimOthers(title.dataset.topic);
+    });
+  });
+  document.querySelector(".titles").addEventListener("mouseleave", () => {
+    if (!stage.classList.contains("is-live")) return;
+    clearFocus();
+  });
+
   cards.forEach((card) => {
     card.addEventListener("click", () => {
       if (!stage.classList.contains("is-live")) return;

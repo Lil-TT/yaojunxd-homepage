@@ -9,63 +9,78 @@
 <body>
   <header class="bar">
     <img src="assets/logo.png" alt="logo" />
-    <nav>
-      <a href="https://www.yaojunxd.com/?me/">个人简介</a>
-      <a href="https://www.yaojunxd.com/?contest/">学科竞赛</a>
-      <a href="https://www.yaojunxd.com/?science/">科研经历</a>
-      <a href="https://www.yaojunxd.com/?ip/">知识产权</a>
-      <a href="https://www.yaojunxd.com/?contact/">在线留言</a>
-    </nav>
+    <button class="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </header>
 
+  <nav class="menu-panel" id="menu-panel" aria-hidden="true">
+    <button class="menu-close" type="button" aria-label="关闭菜单"></button>
+    <a href="https://www.yaojunxd.com/">主页</a>
+    <a href="https://www.yaojunxd.com/?me/">个人简介</a>
+    <a href="https://www.yaojunxd.com/?contest/">学科竞赛</a>
+    <a href="https://www.yaojunxd.com/?science/">科研经历</a>
+    <a href="https://www.yaojunxd.com/?ip/">知识产权</a>
+    <a href="https://www.yaojunxd.com/?contact/">在线留言</a>
+  </nav>
+
   <button class="skip" type="button">跳过动画</button>
-  <button class="replay" type="button" hidden>重播开场</button>
+  <button class="replay" type="button" hidden>重新播放</button>
 
   <main class="stage">
+    <div class="hero-wash" aria-hidden="true"></div>
+    <div class="hero-halo" aria-hidden="true"></div>
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-3d" aria-hidden="true">
       <canvas id="hero-canvas"></canvas>
     </div>
     <p class="hello">你好</p>
 
-    <figure class="card pos-1" data-topic="science" data-href="https://www.yaojunxd.com/?science/" style="--tilt:-7deg">
+    <figure class="card pos-1" data-topic="science" data-href="https://www.yaojunxd.com/?science/" style="--tilt:-8deg; --rx:16deg; --ry:22deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/1-science.png" alt="" />
         <div class="card-frame"><img src="assets/cards/1-science.png" alt="科研经历" /></div>
       </div>
     </figure>
-    <figure class="card pos-2" data-topic="contest" data-href="https://www.yaojunxd.com/?contest/" style="--tilt:5deg">
+    <figure class="card pos-2" data-topic="contest" data-href="https://www.yaojunxd.com/?contest/" style="--tilt:6deg; --rx:14deg; --ry:-24deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/2-contest.jpg" alt="" />
         <div class="card-frame"><img src="assets/cards/2-contest.jpg" alt="学科竞赛" /></div>
       </div>
     </figure>
-    <figure class="card pos-3" data-topic="me" data-href="https://www.yaojunxd.com/?me/" style="--tilt:6deg">
+    <figure class="card pos-3" data-topic="me" data-href="https://www.yaojunxd.com/?me/" style="--tilt:7deg; --rx:8deg; --ry:-26deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/3-me.jpg" alt="" />
         <div class="card-frame"><img src="assets/cards/3-me.jpg" alt="个人简介" /></div>
       </div>
     </figure>
-    <figure class="card pos-4" data-topic="science" data-href="https://www.yaojunxd.com/?science/" style="--tilt:4deg">
+    <figure class="card pos-4" data-topic="science" data-href="https://www.yaojunxd.com/?science/" style="--tilt:4deg; --rx:-14deg; --ry:-20deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/4-science.jpg" alt="" />
         <div class="card-frame"><img src="assets/cards/4-science.jpg" alt="科研经历" /></div>
       </div>
     </figure>
-    <figure class="card pos-5" data-topic="contest" data-href="https://www.yaojunxd.com/?contest/" style="--tilt:-6deg">
+    <figure class="card pos-5" data-topic="contest" data-href="https://www.yaojunxd.com/?contest/" style="--tilt:-6deg; --rx:-12deg; --ry:24deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/5-contest.png" alt="" />
         <div class="card-frame"><img src="assets/cards/5-contest.png" alt="学科竞赛" /></div>
       </div>
     </figure>
-    <figure class="card pos-6" data-topic="me" data-href="https://www.yaojunxd.com/?me/" style="--tilt:-5deg">
+    <figure class="card pos-6" data-topic="me" data-href="https://www.yaojunxd.com/?me/" style="--tilt:-5deg; --rx:12deg; --ry:22deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/6-me.jpg" alt="" />
         <div class="card-frame"><img src="assets/cards/6-me.jpg" alt="个人简介" /></div>
       </div>
     </figure>
-    <figure class="card pos-7" data-topic="ip" data-href="https://www.yaojunxd.com/?ip/" style="--tilt:-8deg">
+    <figure class="card pos-7" data-topic="ip" data-href="https://www.yaojunxd.com/?ip/" style="--tilt:-9deg; --rx:16deg; --ry:20deg">
       <div class="card-float">
+        <div class="card-edge"></div>
         <img class="card-blur" src="assets/cards/7-ip.jpg" alt="" />
         <div class="card-frame"><img src="assets/cards/7-ip.jpg" alt="知识产权" /></div>
       </div>
