@@ -29,3 +29,10 @@ preview/assets/*.glb
 preview/assets/spiderman.glb
 preview/assets/nanachi.glb
 
+
+# Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts

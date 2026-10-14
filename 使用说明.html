@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>首页开场样板 · 使用说明</title>
+  <style>
+    :root { --ink:#1b1c1e; --muted:#6b6e76; --line:#e6e4df; --navy:#2b3038; --ok:#2f6b4f; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:#ece8e1; color:var(--ink); line-height:1.75; font-size:15px; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 28px 14px 64px; }
+    .sheet { background:#fffdf9; border: 1px solid #ddd8ce; padding: 36px 40px 44px; }
+    h1 { font-size: 22px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
+    .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+    h2 { font-size: 16px; margin: 22px 0 8px; }
+    p, li { margin-bottom: 8px; }
+    ol, ul { padding-left: 1.25em; }
+    a { color: #035aa6; }
+    .note { background: #f4f0e8; padding: 10px 12px; margin: 12px 0; font-size: 14px; }
+    code { font-size: 13px; background: #eeeae3; padding: 1px 5px; }
+    .ok { color: var(--ok); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article class="sheet">
+      <h1>yaojunxd.com 首页开场<br>样板 · 使用说明</h1>
+      <p class="sub">2026年10月　·　中期样板　·　本机预览含 3D　·　未改线上网站</p>
+
+      <p class="ok">推荐用下面「方式 A」打开 Next 工程，可看到完整开场：3D 出场 / 挥手 / 定格、卡片环绕、四标题对焦。人物为已对齐的正式形象（实时 GLB，非开场成片）。</p>
+
+      <h2>从 GitHub 下载</h2>
+      <ol>
+        <li>打开 <a href="https://github.com/Lil-TT/yaojunxd-homepage">https://github.com/Lil-TT/yaojunxd-homepage</a></li>
+        <li>点绿色 <strong>Code</strong> → <strong>Download ZIP</strong></li>
+        <li>解压到本地文件夹</li>
+      </ol>
+
+      <h2>方式 A（推荐）· Next 工程</h2>
+      <p>需已安装 <a href="https://nodejs.org/">Node.js</a>（建议 20 及以上）。</p>
+      <ol>
+        <li>终端进入解压后的项目根目录（能看到 <code>package.json</code> 的那一层）</li>
+        <li>执行：<br>
+          <code>npm install</code><br>
+          <code>npm run dev</code></li>
+        <li>浏览器打开终端提示的地址（一般为 <a href="http://127.0.0.1:3000">http://127.0.0.1:3000</a>）</li>
+      </ol>
+      <p class="note">第一次 <code>npm install</code> 与首次加载 3D 模型会稍慢，属正常。右下角可「跳过动画」。右上角汉堡为现站风格菜单。</p>
+
+      <h2>方式 B · 早期静态样板（preview）</h2>
+      <p>若只需看早期静态包：进入 <code>preview</code> 文件夹，按该目录内说明用本地服务器打开（勿直接双击 <code>index.html</code>）。完整中期效果以方式 A 为准。</p>
+
+      <h2>这一版能看什么</h2>
+      <ul>
+        <li>背景暗色 <code>#171717</code>；四标题：个人简介 / 学科竞赛 / 科研经历 / 知识产权，可点进现站栏目</li>
+        <li>环绕主卡为您提供的技能图；子卡保留开场景深层次</li>
+        <li>电脑与手机宽度均播 3D（豆包 About 缩窄后会变静态）</li>
+        <li>看手机效果：窗口拉窄到手机宽度后，请<strong>再刷新一次</strong></li>
+      </ul>
+
+      <h2>说明</h2>
+      <ul>
+        <li>线上 yaojunxd.com 尚未改动，确认方向并完成约定节点后再植入。</li>
+        <li>看完请把要调的地方列成清单发回即可。</li>
+      </ul>
+    </article>
+  </div>
+</body>
+</html>
