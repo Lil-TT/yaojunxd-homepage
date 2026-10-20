@@ -11,13 +11,27 @@
  */
 
 /**
- * Child sheets start at 5.4s 回正 and are fully out by ~7.35s. No empty
- * hold after that — hero fades, then titles / first focus at INTRO_END.
+ * Tighter chain (P0): pull-back fade starts with dolly (~4.05), micro ring
+ * tilt arms before feet grow, titles kick without a static hold.
  */
-export const INTRO_END = 7.85;
+export const INTRO_END = 6.55;
 
 /** Scrub range through card settle → hero fade → titles kickoff. */
-export const ANIM_END = 8.5;
+export const ANIM_END = 7.1;
+
+/** Camera dolly-out / settle begin — character fade starts here. */
+export const FADE_START = 4.05;
+/**
+ * Micro ring tilt arms with the pull-back — well before feet grow,
+ * so the swing is already in the shot when child sheets appear.
+ */
+export const FLOW_ARM = 4.05;
+/** Feet / child sheets begin growing. */
+export const FEET_GROW = 5.4;
+/** Character fully clear before titles. */
+export const FADE_END = 6.35;
+/** Camera settle lock (was 7.25). */
+export const SETTLE_END = 6.35;
 
 export type BeatId =
   | "idle-circle"
@@ -38,8 +52,8 @@ export type Beat = {
 
 /** Scrub / compare markers from official frame analysis. */
 export const BEATS: Beat[] = [
-  { id: "idle-circle", t: 0, label: "小圆 idle" },
-  { id: "expand", t: 0.75, label: "圆开始扩" },
+  { id: "idle-circle", t: 0, label: "小圆 · 立刻开扩" },
+  { id: "expand", t: 0, label: "圆开始扩（无等待）" },
   { id: "yeah", t: 1.0, label: "Yeah 出手" },
   { id: "yeah", t: 1.25, label: "气泡淡入" },
   { id: "yeah", t: 1.75, label: "全身露出" },
@@ -47,11 +61,11 @@ export const BEATS: Beat[] = [
   { id: "present", t: 2.75, label: "摊手介绍" },
   { id: "burst", t: 3.45, label: "卡片爆出·人物下沉·开绕" },
   { id: "orbit", t: 3.85, label: "背后仰视" },
+  { id: "fade", t: 4.05, label: "镜头拉远·人开始淡·环微转接入" },
   { id: "orbit", t: 4.2, label: "绕侧回转" },
-  { id: "orbit", t: 5.4, label: "回正·子卡生长" },
-  { id: "settle", t: 7.35, label: "卡片就绪" },
-  { id: "fade", t: 7.35, label: "人开始淡" },
-  { id: "titles", t: 7.85, label: "第一行字·对焦" },
+  { id: "orbit", t: 5.4, label: "回正·子卡生长（叠在微转上）" },
+  { id: "settle", t: 6.35, label: "卡片就绪·人淡尽" },
+  { id: "titles", t: 6.55, label: "第一行字·对焦（接环微转）" },
 ];
 
 export function clamp01(v: number) {
@@ -156,52 +170,55 @@ export function sampleSpline(t: number, keys: [number, number][]) {
  * r/vh: .0745 .082  .087  .102  .1485 .173  .2035 .240  .287  .391  .443  .501
  * t:    1.8   1.9   2.0   2.1   2.2   2.3   2.4   2.5   2.6   2.7
  * r/vh: .562  .629  .694  .759  .811  .852  .888  .917  .953  ~1.02 (corners clear)
- * Veil completely off screen ≈ 2.65–2.7s (NOT 1.75 — earlier keys were too fast).
+ * Veil reveal: ease-in radius (慢进快出) — linger small, then punch open.
+ * Starts immediately (no idle hold). Edge begins crisp, then softens into the
+ * backdrop (see holeEdgeSoft). Mask alone drives the punch — no opacity cliffs.
  */
-export function holeRadius(t: number, vw: number, vh: number) {
-  const m = vh;
-  return m * sampleLinear(t, [
-    [0, 0.0745],
-    [0.25, 0.082],
-    [0.5, 0.087],
-    [0.75, 0.102],
-    [1.0, 0.1485],
-    [1.1, 0.173],
-    [1.2, 0.2035],
-    [1.3, 0.240],
-    [1.4, 0.287],
-    [1.5, 0.391],
-    [1.6, 0.443],
-    [1.7, 0.501],
-    [1.8, 0.562],
-    [1.9, 0.629],
-    [2.0, 0.694],
-    [2.1, 0.759],
-    [2.2, 0.811],
-    [2.3, 0.852],
-    [2.4, 0.888],
-    [2.5, 0.917],
-    [2.6, 0.953],
-    [2.75, 1.05],
-  ]);
+export const HOLE_EXPAND_START = 0;
+export const HOLE_EXPAND_END = 3.5;
+const HOLE_R0 = 0.0745;
+const HOLE_R1 = 1.08;
+
+/** power2.in — slow start, accelerating finish (慢进快出). */
+function easeInQuad(u: number) {
+  return u * u;
+}
+
+/** 0→1 while the circle covers the stage (eased, not linear). */
+export function holeExpandProgress(t: number) {
+  if (t <= HOLE_EXPAND_START) return 0;
+  if (t >= HOLE_EXPAND_END) return 1;
+  const u = (t - HOLE_EXPAND_START) / (HOLE_EXPAND_END - HOLE_EXPAND_START);
+  return easeInQuad(u);
 }
 
 /**
- * Hole center Y — the official circle drifts DOWN as it expands
- * (bbox centers: 0.504 @0s → 0.526 @1.1s → 0.554 @1.4s → ~0.562 @1.7s),
- * then eases back toward mid as the circle outgrows the screen.
- * Returned as fraction of viewport height (for the CSS mask center).
+ * Edge soften 0→1 — same ease-in factor as the radius expand (慢进快出),
+ * so the rim stays crisp early and blooms with the punch at the end.
+ */
+export function holeEdgeSoft(t: number) {
+  return holeExpandProgress(t);
+}
+
+export function holeRadius(t: number, _vw: number, vh: number) {
+  const p = holeExpandProgress(t);
+  return vh * (HOLE_R0 + (HOLE_R1 - HOLE_R0) * p);
+}
+
+/**
+ * Hole center Y — one linear drift down, then linear ease back (C0 continuous).
  */
 export function holeCenterY(t: number) {
-  return sample(t, [
-    [0, 0.5037],
-    [0.5, 0.5056],
-    [1.0, 0.523],
-    [1.4, 0.558],
-    [1.7, 0.562],
-    [2.3, 0.541],
-    [2.7, 0.525],
-  ]);
+  const p = holeExpandProgress(t);
+  if (p <= 0) return 0.5037;
+  if (p >= 1) return 0.525;
+  const mid = 0.55;
+  if (p < mid) {
+    const u = p / mid;
+    return 0.5037 + (0.562 - 0.5037) * u;
+  }
+  const u = (p - mid) / (1 - mid);
+  return 0.562 + (0.525 - 0.562) * u;
 }
 
 /** Gesture weights interleaved on the same clock as mask/camera. */
@@ -222,8 +239,8 @@ export function gestureWeights(t: number) {
       [3.35, 1],
       [3.7, 1],
       [5.0, 0.2],
-      [6.0, 0.12],
-      [7.25, 0.08],
+      [5.8, 0.1],
+      [SETTLE_END, 0.06],
     ]),
     backLift: sample(t, [
       [0, 0],

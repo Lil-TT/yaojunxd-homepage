@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P0 验收清单与会议邀约 · yaojunxd.com</title>
+  <style>
+    :root { --ink:#1b1c1e; --muted:#6b6e76; --line:#e6e4df; --navy:#2b3038; --ok:#2f6b4f; --wait:#8a6a2b; --todo:#5c6570; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:#ece8e1; color:var(--ink); line-height:1.75; font-size:14.5px; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 28px 14px 64px; }
+    .sheet { background:#fffdf9; border: 1px solid #ddd8ce; padding: 40px 44px 48px; }
+    h1 { font-size: 22px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
+    .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+    h2 { font-size: 16px; margin: 26px 0 10px; }
+    h3 { font-size: 14px; margin: 16px 0 8px; color: var(--navy); }
+    p, li { margin-bottom: 8px; text-align: justify; }
+    ul, ol { padding-left: 1.25em; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 8px 0 14px; }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+    th { background: var(--navy); color: #fff; font-size: 12px; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .wait { color: var(--wait); font-weight: 600; }
+    .todo { color: var(--todo); }
+    .check { width: 1.4em; text-align: center; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .note { background: #f4f0e8; padding: 12px 14px; margin: 14px 0; font-size: 13.5px; }
+    .ask { background: #eef3f0; border: 1px solid #d5e2da; padding: 14px 16px; margin: 16px 0; }
+    .meta { margin-bottom: 8px; }
+    .small { font-size: 12.5px; color: var(--muted); }
+    .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+    .tag-ok { background: #e5f0ea; color: var(--ok); }
+    .tag-next { background: #eceff2; color: var(--todo); }
+    @page { size: A4; margin: 12mm 12mm 14mm; }
+    @media print {
+      body { background:#fff; }
+      .wrap { padding: 0; max-width: none; }
+      .sheet { border: 0; padding: 0; }
+      h2, table, .note, .ask { break-inside: avoid; page-break-inside: avoid; }
+    }
+    @media (max-width: 640px) { .sheet { padding: 22px 16px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article class="sheet">
+      <h1>yaojunxd.com 首页动画<br>P0 验收清单与会议邀约</h1>
+      <p class="sub">发给甲方验收　·　日期：2026年10月20日　·　本轮样板待你点头后进入下一轮</p>
+
+      <div class="meta">
+        <p>站点：<strong>yaojunxd.com</strong>　·　甲方：姚骏　·　乙方：深圳市龙岗区梯泰思科技工作室</p>
+        <p>范围：豆包气质开场样板（3D 人物、卡片环、四行标题、进子页过渡）。<strong>正式线上首页尚未改动。</strong></p>
+        <p>源码仓库（GitHub）：<a href="https://github.com/Lil-TT/yaojunxd-homepage" target="_blank" rel="noopener noreferrer"><strong>https://github.com/Lil-TT/yaojunxd-homepage</strong></a></p>
+        <p class="small">本轮 P0 样板源码已同步到上述仓库；会议中可直接打开仓库或本机 clone 后 <code>npm install &amp;&amp; npm run dev</code> 预览。</p>
+      </div>
+
+      <div class="ask">
+        <p><strong>会议邀约</strong></p>
+        <p>本轮 P0 样板已收口到可验收状态。想请你这两天（10月20日–21日）是否方便开一次短会（约 20–30 分钟），一起过一遍开场到进页，做这一轮验收。</p>
+        <p>方式：腾讯会议 / Zoom / 当面屏幕共享均可。你定一个时段，我们按时打开预览一起看。</p>
+        <p class="small">若这两天不方便，也请回一个你方便的时间；我们按你的时间排，不催。</p>
+      </div>
+
+      <h2>一、本轮验收怎么走</h2>
+      <ol>
+        <li>打开源码仓库或本机预览（会议中由我们投屏，或你本机打开）：<a href="https://github.com/Lil-TT/yaojunxd-homepage" target="_blank" rel="noopener noreferrer">https://github.com/Lil-TT/yaojunxd-homepage</a></li>
+        <li>按下面清单逐项勾选：通过 / 需改 / 暂缓。</li>
+        <li>会后你提一轮修改意见；我们整理成下一轮任务再开工。</li>
+      </ol>
+      <p class="small">建议桌面 Chrome 全屏看一遍；需要时再缩窗口看手机宽度（手机单独一版仍在后续阶段）。</p>
+
+      <h2>二、P0 验收清单（请勾选）</h2>
+      <p class="small">□ 通过　△ 需改　— 暂缓 / 不测</p>
+
+      <h3>A. 开场氛围与时间轴 <span class="tag tag-ok">本轮已做</span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:8%">勾选</th>
+            <th style="width:22%">项目</th>
+            <th>验收要点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="check">□</td>
+            <td>首帧与背景</td>
+            <td>开场偏暗起步；背后青蓝流体场可见；圆孔扩开后逐渐融入背景，边界由清晰变柔。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>动画衔接</td>
+            <td>镜头拉远时人物开始淡出；环上微转在子卡长出前已接入；节点之间不断档、不空等。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>跳过</td>
+            <td>右下角「跳过动画」可直接落到可交互落版。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>你好气泡</td>
+            <td>使用图片「Hi 我是姚骏」；淡入 → 左边抬起回弹一次 → 淡出。位置与大小以当前样板为准。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>B. 3D 人物 <span class="tag tag-ok">本轮已做（退场缩放待下一轮）</span></h3>
+      <table>
+        <thead>
+          <tr><th style="width:8%">勾选</th><th style="width:22%">项目</th><th>验收要点</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="check">□</td>
+            <td>出场动作</td>
+            <td>idle → 挥手 / Yeah → 摊手介绍，与圆孔扩开、卡片爆出节奏大致合拍。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>肤色</td>
+            <td>面部与手部贴图已调暗约 20%、略偏暖，更接近亚洲人肤色。请确认是否合适。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>淡出时机</td>
+            <td>镜头拉远后人物逐渐淡出，卡片环落定前人已基本退干净。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>C. 主卡与子卡布局 <span class="tag tag-ok">本轮已确认节点</span></h3>
+      <table>
+        <thead>
+          <tr><th style="width:8%">勾选</th><th style="width:22%">项目</th><th>验收要点</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="check">□</td>
+            <td>主卡落点</td>
+            <td>七张主卡位置、大小、倾角以你确认的最终记录为准；开场落到落点时无「闪一下」。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>子卡关系</td>
+            <td>子卡相对主卡的位置 / 大小 / 倾角锁定；各组子卡数量可不同（含左下竞赛组已单独确认）。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>层级</td>
+            <td>生长过程中子卡始终在主卡下层，不盖住主卡。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>爆炸同步</td>
+            <td>主卡爆炸变大变小时，子卡按同一比例跟着变。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>虚化同步</td>
+            <td>子卡长出到第一行字出现，主卡层与子卡层一起虚化，无明显时间差。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>D. 标题与进页 <span class="tag tag-ok">本轮已做</span></h3>
+      <table>
+        <thead>
+          <tr><th style="width:8%">勾选</th><th style="width:22%">项目</th><th>验收要点</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="check">□</td>
+            <td>四行标题</td>
+            <td>个人简介 / 学科竞赛 / 科研经历 / 知识产权逐行出现，落版后可点。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>悬停反馈</td>
+            <td>悬停标题时对应主卡轻微推近；<strong>无变色、无下划线</strong>（按你的意见）。</td>
+          </tr>
+          <tr>
+            <td class="check">□</td>
+            <td>点击进页</td>
+            <td>点击标题：该主题一张主卡推到跟前并铺满画面 → 再进入现站对应栏目（?me / ?contest / ?science / ?ip）。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>三、本轮结论栏（会后填写）</h2>
+      <table>
+        <thead>
+          <tr><th style="width:28%">项</th><th>填写</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>整体观感</td><td>□ 通过　□ 小改后通过　□ 需较大调整</td></tr>
+          <tr><td>优先要改的点</td><td>（会议记录 / 文字补充）</td></tr>
+          <tr><td>可暂缓到下一轮</td><td></td></tr>
+          <tr><td>验收人 / 日期</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h2>四、下一轮事务（P0 收尾 + 进入中期） <span class="tag tag-next">待验收后开工</span></h2>
+      <p>下列事项<strong>不在本轮强验收范围内</strong>；你点头或提出新一轮建议后，我们按优先级排进下一轮：</p>
+      <table>
+        <thead>
+          <tr><th style="width:8%">序号</th><th style="width:28%">事项</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td class="todo">Logo / 菜单</td>
+            <td>对照现站粗细与小动画，统一顶栏气质。</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td class="todo">开场全场微动 + 时长</td>
+            <td>落版后全场轻微呼吸感；按验收意见再收紧总时长。</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td class="todo">3D 退场缩放</td>
+            <td>人物淡出时同步缩小，和卡片环落定更一体。</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td class="todo">主卡 / 叠层可换图</td>
+            <td>至少主要照片可换；对接你后续提供的定稿图或后台方式。</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td class="todo">手机单独一版</td>
+            <td>合同阶段 3：手机宽度单独编排（非本轮桌面验收重点）。</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td class="todo">全站字体与暗色抽查</td>
+            <td>仿宋 + Times 嵌入；暗色统一复查。</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td class="todo">植入现站与上线验收</td>
+            <td>嵌进 yaojunxd.com 首页；Chrome / Safari / 微信内抽查；确认子页未被改坏。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        <p><strong>说明</strong></p>
+        <ul>
+          <li>本轮样板仍在预览环境，<strong>不会改你的线上正式首页</strong>，直到中期确认与植入阶段。</li>
+          <li>你这两天若能开会，我们优先过清单；若只能文字反馈，也请按「二」里的勾选项回复即可。</li>
+          <li>下一轮以本轮验收意见为准排序，不擅自扩大范围。</li>
+        </ul>
+      </div>
+
+      <p class="small" style="margin-top:28px;text-align:center;">
+        文件：docs/甲方-P0验收清单.html　·　深圳市龙岗区梯泰思科技工作室
+      </p>
+    </article>
+  </div>
+</body>
+</html>

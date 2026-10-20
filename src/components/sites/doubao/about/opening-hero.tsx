@@ -4,11 +4,18 @@ import { memo, useEffect, useRef } from "react";
 import { CHARACTER_CLIPS, CHARACTER_GLB } from "./content";
 import {
   BEATS,
+  FADE_END,
+  FADE_START,
+  HOLE_EXPAND_END,
   INTRO_END,
+  SETTLE_END,
   beatLabelAt,
   characterClipAt,
   characterClipLocalTime,
+  clamp01,
   holeCenterY,
+  holeEdgeSoft,
+  holeExpandProgress,
   holeRadius,
   easeScale,
   sample,
@@ -30,6 +37,18 @@ type Props = {
 };
 
 /**
+ * One rebound while the bubble is in: left side lifts, drops past level, settles.
+ * Negative degrees lift the left edge; the pivot sits on the right, by the tail.
+ */
+function bubbleLift(t: number) {
+  const u = clamp01((t - 1.28) / 1.25);
+  if (u <= 0 || u >= 1) return 0;
+  if (u < 0.4) return -9.5 * Math.sin((u / 0.4) * Math.PI * 0.5);
+  if (u < 0.72) return -9.5 + 13.1 * Math.sin(((u - 0.4) / 0.32) * Math.PI * 0.5);
+  return 3.6 * (1 - Math.sin(((u - 0.72) / 0.28) * Math.PI * 0.5));
+}
+
+/**
  * Memoized — the parent re-renders every animation frame (camera state for
  * the card sphere); this component only re-renders when active/scrubT
  * change. Callbacks must be stable (useCallback in the parent) or the
@@ -48,7 +67,7 @@ export const OpeningHero = memo(function OpeningHero({
   const washRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const maskRef = useRef<HTMLDivElement>(null);
-  const helloRef = useRef<HTMLParagraphElement>(null);
+  const helloRef = useRef<HTMLImageElement>(null);
   const callbacks = useRef({ onExpand, onRevealCards, onDone, onClock });
   callbacks.current = { onExpand, onRevealCards, onDone, onClock };
   const activeRef = useRef(active);
@@ -275,21 +294,34 @@ export const OpeningHero = memo(function OpeningHero({
       const fired = { expand: false, cards: false, titles: false, started: false };
 
       /**
-       * DOM veil + canvas masks. Official edge profile is CRISP:
-       * ~10% of radius feather (measured from radial sat/luma scans),
-       * hole center drifts down 0.504→0.562 while expanding.
+       * DOM veil + character masks.
+       * Veil: start crisp (~7% rim), then soft blooms so the ring melts into
+       * the cyan backdrop. Character keeps a tighter cut so the figure stays clear.
        */
-      const applyDom = (hole: number, cy: number, heroA: number, veilA: number, helloA: number) => {
-        // Official veil edge is sharp: opacity holds until ~100% of the radius,
-        // then falls off over the last ~7% + 3px (measured on official frames).
-        const solid = hole;
-        const edge = hole * 1.07 + 3;
+      const applyDom = (
+        hole: number,
+        cy: number,
+        heroA: number,
+        veilA: number,
+        helloA: number,
+        soft: number,
+        helloTilt = 0
+      ) => {
+        // soft 0 → crisp; soft 1 → wide dissolve into backdrop
+        const inner = soft * 0.4;
+        const outer = 0.07 + soft * 0.72;
+        const veilSolid = Math.max(0, hole * (1 - inner));
+        const veilEdge = hole * (1 + outer) + 3 + soft * hole * 0.2;
+        // Character: stay relatively sharp so only the wash rim blooms
+        const charSolid = hole;
+        const charEdge = hole * (1.07 + soft * 0.12) + 3;
         const at = `circle at 50% ${(cy * 100).toFixed(3)}%`;
-        const veilMask = `radial-gradient(${at}, transparent 0%, transparent ${solid}px, #000 ${edge}px)`;
-        const charMask = `radial-gradient(${at}, #000 0%, #000 ${solid}px, transparent ${edge}px)`;
+        const veilMask = `radial-gradient(${at}, transparent 0%, transparent ${veilSolid}px, #000 ${veilEdge}px)`;
+        const charMask = `radial-gradient(${at}, #000 0%, #000 ${charSolid}px, transparent ${charEdge}px)`;
         if (washRef.current) {
           washRef.current.style.opacity = String(veilA);
-          washRef.current.style.background = "#ffffff";
+          // Dark stage that already carries a hint of brand blue.
+          washRef.current.style.background = "#0e1316";
           washRef.current.style.webkitMaskImage = veilMask;
           washRef.current.style.maskImage = veilMask;
         }
@@ -308,7 +340,7 @@ export const OpeningHero = memo(function OpeningHero({
         }
         if (helloRef.current) {
           helloRef.current.style.opacity = String(helloA);
-          helloRef.current.style.transform = `translateY(${helloA > 0.05 ? 0 : 8}px)`;
+          helloRef.current.style.transform = `rotate(${helloTilt.toFixed(2)}deg)`;
         }
         if (wrapRef.current) {
           wrapRef.current.style.opacity = activeRef.current || scrubRef.current != null ? "1" : "0";
@@ -340,23 +372,23 @@ export const OpeningHero = memo(function OpeningHero({
         const hole = holeRadius(t, vw, vh) * 0.93;
         const holeCy = holeCenterY(t);
 
+        /** Fade as soon as the dolly pull-back begins — no wait for settle. */
         const heroA = sampleLinear(t, [
           [0, 1],
-          /**
-           * Cards are fully out by ~7.35 — fade the character from there
-           * and clear before titles / first focus (INTRO_END).
-           */
-          [7.35, 1],
-          [7.55, 0.5],
-          [7.7, 0.12],
-          [7.85, 0],
+          [FADE_START, 1],
+          [5.15, 0.72],
+          [5.7, 0.38],
+          [FADE_END, 0],
         ]);
-        /** White veil pushed off screen by the growing circle (corners clear ~2.65s). */
-        const veilA = sampleLinear(t, [
-          [0, 1],
-          [2.55, 1],
-          [2.9, 0],
-        ]);
+        /**
+         * Veil wash-out rides the same expand factor (慢进快出) as radius + soft.
+         */
+        const expandP = holeExpandProgress(t);
+        const soft = holeEdgeSoft(t);
+        const veilA =
+          expandP < 1
+            ? 1 - expandP * 0.88
+            : clamp01((1 - 0.88) * (1 - (t - HOLE_EXPAND_END) / 0.35));
         const helloA = sample(t, [
           [0, 0],
           [1.2, 0],
@@ -364,6 +396,7 @@ export const OpeningHero = memo(function OpeningHero({
           [3.0, 1],
           [3.35, 0],
         ]);
+        const helloTilt = bubbleLift(t);
         // Official: cards pop in by ~3.4s and reach their ring by ~3.8s.
         const cardsP = sampleSpline(t, [
           [0, 0],
@@ -419,15 +452,15 @@ export const OpeningHero = memo(function OpeningHero({
          * The old orbit keys (2.33→2.1, then 5.2→5.1) stalled and snapped
          * because a spline zeros its tangent at every direction change,
          * and a linear viewH ramp zooms hardest while the figure is large.
-         * Landing starts during the orbit (4.05s, yaw still turning until
-         * 4.4) and eases to rest by 7.25 (smoothstep — zero end velocity).
-         * No kick, and no pause on the mid ring.
+         * Landing starts during the orbit (FADE_START, yaw still turning until
+         * 4.4) and eases to rest by SETTLE_END — chained into titles without
+         * a long static hold.
          */
         const blend = (t0: number, t1: number, a: number, b: number) =>
           a + (b - a) * smoothstep(t0, t1, t);
         const unit = (t0: number, t1: number, x: number) =>
           Math.min(1, Math.max(0, (x - t0) / Math.max(1e-6, t1 - t0)));
-        const settle0 = 4.05;
+        const settle0 = FADE_START;
         /** Final framing stays a mid shot — character readable, not a speck. */
         const VIEW_END_MUL = 3.65;
         const VIEW_MID_MUL = 3.05;
@@ -448,10 +481,10 @@ export const OpeningHero = memo(function OpeningHero({
         const orbitS = orbitU * orbitU * (3 - 2 * orbitU);
         const viewAt = vB * Math.pow((bodyH * VIEW_MID_MUL) / Math.max(1e-6, vB), orbitS);
         /**
-         * settle0→7.25: smoothstep in log-space so velocity eases to 0 at
-         * the lock (constant coast used to hard-stop and kink UL cards).
+         * settle0→SETTLE_END: smoothstep in log-space so velocity eases to 0
+         * at the lock (constant coast used to hard-stop and kink UL cards).
          */
-        const settleU = smoothstep(settle0, 7.25, t);
+        const settleU = smoothstep(settle0, SETTLE_END, t);
         const viewH =
           t <= 1.5
             ? viewEarly
@@ -459,7 +492,7 @@ export const OpeningHero = memo(function OpeningHero({
               ? easeScale(t, 1.5, 3.45, v150, vB)
               : t <= settle0
                 ? easeScale(t, 3.45, 5, vB, bodyH * VIEW_MID_MUL)
-                : t <= 7.25
+                : t <= SETTLE_END
                   ? viewAt * Math.pow(viewEnd / Math.max(1e-6, viewAt), settleU)
                   : viewEnd;
         const camEarly =
@@ -487,7 +520,7 @@ export const OpeningHero = memo(function OpeningHero({
             ? camEarly
             : t <= settle0
               ? blend(3.45, settle0, LB, lowY)
-              : t <= 7.25
+              : t <= SETTLE_END
                 ? yAt + (endY - yAt) * settleU
                 : endY;
         const lookY =
@@ -495,7 +528,7 @@ export const OpeningHero = memo(function OpeningHero({
             ? lookEarly
             : t <= settle0
               ? blend(3.45, settle0, LB, lowLook)
-              : t <= 7.25
+              : t <= SETTLE_END
                 ? lookAt + (endLook - lookAt) * settleU
                 : endLook;
         /** Land on exactly 0 (not 2π) so 回正 is a true frontal camera. */
@@ -509,7 +542,7 @@ export const OpeningHero = memo(function OpeningHero({
               ? blend(1.75, 3.45, 30, 32)
               : t <= settle0
                 ? blend(3.45, 5, 32, 41.2)
-                : t <= 7.25
+                : t <= SETTLE_END
                   ? fovAt + (42 - fovAt) * settleU
                   : 42;
         camera.fov = fov;
@@ -604,7 +637,7 @@ export const OpeningHero = memo(function OpeningHero({
           };
         }
 
-        applyDom(hole, holeCy, heroA, veilA, helloA);
+        applyDom(hole, holeCy, heroA, veilA, helloA, soft, helloTilt);
 
         const hold =
           want !== "idle" &&
@@ -643,7 +676,7 @@ export const OpeningHero = memo(function OpeningHero({
         };
 
         if (!scrubbing) {
-          if (t >= 2.65 && !fired.expand) {
+          if (t >= HOLE_EXPAND_END && !fired.expand) {
             fired.expand = true;
             callbacks.current.onExpand?.();
           }
@@ -681,7 +714,7 @@ export const OpeningHero = memo(function OpeningHero({
           playT = (now - t0) / 1000;
           evaluate(playT, dt, false);
         } else {
-          applyDom(0, 0.5, 0, 0, 0);
+          applyDom(0, 0.5, 0, 0, 0, 0);
         }
 
         raf = requestAnimationFrame(loop);
@@ -713,19 +746,20 @@ export const OpeningHero = memo(function OpeningHero({
       style={{ opacity: active || scrubT != null ? 1 : "0", transition: "opacity 0.6s ease" }}
       aria-hidden
     >
-      <div ref={washRef} className="absolute inset-0 z-[6] bg-white" style={{ opacity: 0 }} />
+      <div ref={washRef} className="absolute inset-0 z-[6] bg-[#0e1316]" style={{ opacity: 0 }} />
       <div ref={glowRef} className="absolute inset-0 z-[7]" style={{ opacity: 0 }} />
       <div ref={maskRef} className="absolute inset-0 z-[8]" style={{ opacity: 0 }}>
         <canvas ref={canvasRef} className="block h-full w-full" />
       </div>
-      <p
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         ref={helloRef}
-        className="absolute left-[calc(50%-min(28vw,200px))] top-[min(36%,32vh)] z-[9] whitespace-nowrap rounded-[12px_12px_4px_12px] bg-white px-[8px] py-[4px] text-[clamp(10px,2.6vw,13px)] font-medium tracking-wide text-[#1c1f24] shadow-[0_4px_14px_rgba(40,50,80,0.12)] sm:px-[10px] sm:py-[5px] sm:text-[13px]"
-        style={{ opacity: 0, transition: "opacity 0.05s linear, transform 0.2s ease" }}
-      >
-        Hi，我是姚骏
-        <span className="absolute -right-0.5 bottom-1.5 h-1.5 w-1.5 rotate-45 bg-white sm:h-2 sm:w-2" />
-      </p>
+        src="/sites/yaojunxd/about/hello-bubble.png"
+        alt=""
+        draggable={false}
+        className="absolute left-[calc(50%-300px)] top-[min(50%,44vh)] z-[9] w-[120px] max-w-none origin-[86%_58%]"
+        style={{ opacity: 0 }}
+      />
     </div>
   );
 });

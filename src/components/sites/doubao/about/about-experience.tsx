@@ -1,20 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FLUID_BLUE,
-  FLUID_VIDEO,
-  FLUID_WASH,
-  cards,
-  feet,
-  titles,
-  type CardDef,
-  type Topic,
-} from "./content";
+import { cards, feet, titles, type CardDef, type Topic } from "./content";
+import { FluidCyanBackdrop } from "./fluid-cyan-backdrop";
 import { OpeningDebug } from "./opening-debug";
 import { OpeningHero } from "./opening-hero";
 import { SiteHeader } from "./site-header";
-import { clamp01, sampleSpline, smoothstep, type CamInfo, type ClockInfo } from "./opening-timeline";
+import {
+  FEET_GROW,
+  FLOW_ARM,
+  SETTLE_END,
+  clamp01,
+  sampleSpline,
+  smoothstep,
+  type CamInfo,
+  type ClockInfo,
+} from "./opening-timeline";
 
 type Phase = "intro" | "titles" | "live";
 
@@ -40,18 +41,39 @@ const STAGE_H = 810;
 const FOCUS_ARRIVE_MS = 2400;
 const FOCUS_LEAVE_MS = 2600;
 /** Extra rest after a leave finishes, before the next topic arrives. */
-const FOCUS_GAP_MS = 700;
-/** Beat after intro settles, before the first card starts focusing. */
-const FOCUS_FIRST_DELAY_MS = 480;
+const FOCUS_GAP_MS = 400;
+/** Titles chain straight off settle — almost no dead hold. */
+const FOCUS_FIRST_DELAY_MS = 80;
 const FOCUS_IN_EASE = "cubic-bezier(0.33, 1, 0.68, 1)";
 const FOCUS_OUT_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
-const FLOW_POS = 20;
-const FLOW_NEG = -20;
+/** Micro ring tilt (±7°) — armed at FLOW_ARM (before feet), through titles/live. */
+const FLOW_POS = 7;
+const FLOW_NEG = -7;
 /** Official swing is JS-eased and much slower than 2s CSS. */
-const FLOW_TURN_MS = 8000;
-const FLOW_HOLD_MS = 2000;
+const FLOW_TURN_MS = 7000;
+const FLOW_HOLD_MS = 1200;
 /** Unselected cards hold this blur for the whole title focus. */
 const DIM_BLUR = 6;
+
+/**
+ * Title → detail: one hero card per topic flies to the lens and covers the
+ * viewport, then we leave. No underline / recolor — motion is the cue.
+ */
+const TOPIC_EXIT_CARD: Record<Topic, string> = {
+  me: "me-a",
+  contest: "contest-a",
+  science: "science-a",
+  ip: "ip",
+};
+const EXIT_MS = 1100;
+const EXIT_EASE = "cubic-bezier(0.76, 0, 0.24, 1)";
+
+type ExitFlight = {
+  href: string;
+  src: string;
+  from: { left: number; top: number; width: number; height: number };
+  expand: boolean;
+};
 
 /**
  * Landing ring vs official: cards read larger than the center titles.
@@ -110,7 +132,7 @@ function calcStageFit() {
  * the WebGL hero uses (yaw/height/distance/fov), so parallax, occlusion
  * (front/back layers around the character canvas), perspective sizing and
  * DOF blur all come for free. Anchors are solved so that at the final held
- * camera (t ≥ 7.25) every card projects back to its authored layout pixel
+ * camera (t ≥ SETTLE_END) every card projects back to its authored layout pixel
  * exactly — the handoff to the titles/live stage is seamless.
  * ------------------------------------------------------------------------- */
 
@@ -139,22 +161,22 @@ const FINAL_FOV = 42;
  *  depth only changes how aggressively they inflate on the closer cameras. */
 const CARD_DEPTH: Record<string, number> = {
   "science-a": -2.5,
-  "contest-a": 1.7,
-  "me-a": -0.5,
-  "contest-b": 1.1,
+  "contest-a": 1.1,
+  "me-a": 2.1,
+  "contest-b": -0.5,
   "science-b": -0.8,
-  "me-b": 2.1,
+  "me-b": 1.7,
   ip: -0.8,
 };
 /** Depth used ONLY for the end-state circle-of-confusion at the final camera. */
 const COC_DEPTH: Record<string, number> = {
   "science-a": 0.5,
-  "contest-a": 1.7,
-  "me-a": -1.5,
-  "contest-b": 1.1,
-  "science-b": -0.8,
-  "me-b": 2.1,
-  ip: -0.35,
+  "contest-a": 1.1,
+  "me-a": 2.1,
+  "contest-b": -1.5,
+  "science-b": -0.35,
+  "me-b": 1.7,
+  ip: -0.8,
 };
 
 /** Sphere-inflate factor g(t): ~0.03 = hugging the body at burst, 1 = final ring.
@@ -163,7 +185,7 @@ const COC_DEPTH: Record<string, number> = {
  *  body .57) — the visible spread happens 4.75→5.0 (right .82→.87) while
  *  the camera pulls out in lock-step, so g only reaches ~0.65 by 5.0 and
  *  HOLDS there (0.65 × final-ring @ 5.1b viewH ≈ the final screen layout);
- *  the last 0.65→1 inflate rides the 6.5→7.25 ease-out to the final cam. */
+ *  the last inflate rides settle0→SETTLE_END ease-out to the final cam. */
 /** Same curve as the hero `cardsP` track — sampled per card with `lag`. */
 const BURST_KEYS: [number, number][] = [
   [0, 0],
@@ -182,9 +204,9 @@ const SPHERE_G: [number, number][] = [
   [3.85, 0.12],
   [4.05, 0.16],
   [4.4, 0.28],
-  [5.4, 0.55],
-  [6.4, 0.82],
-  [7.25, 1],
+  [5.4, 0.58],
+  [6.0, 0.88],
+  [SETTLE_END, 1],
   [9, 1],
 ];
 
@@ -195,11 +217,11 @@ const SPHERE_G: [number, number][] = [
  */
 const BELT_OFFSET: Record<string, { x: number; y: number }> = {
   "science-a": { x: -0.5, y: 6.0 },
-  "me-a": { x: 4.5, y: -5.4 },
-  "contest-b": { x: -4.3, y: 22.8 },
-  "science-b": { x: 7.0, y: 10.2 },
-  "me-b": { x: -6.5, y: 1.6 },
-  ip: { x: -5.0, y: 1.2 },
+  "contest-a": { x: -4.3, y: 22.8 },
+  "me-a": { x: -6.5, y: 1.6 },
+  "contest-b": { x: 4.5, y: -5.4 },
+  "science-b": { x: -5.0, y: 1.2 },
+  ip: { x: 7.0, y: 10.2 },
 };
 
 /** "rotateX(8deg) rotateY(-5deg)…" → { x: 8, y: -5, z: 0 } */
@@ -274,8 +296,9 @@ function solveSphereAnchors(cam: CamInfo): SphereSolved {
 
   const anchors = cards.map((card) => {
     const ratio = card.id === "science-a" ? 124 / 470 : 1.28;
-    const cx = card.left + card.width / 2;
-    const cy = card.top + (card.width * ratio) / 2;
+    const pose = CONFIRMED_MAIN.cards[card.id] ?? REST_MAIN;
+    const cx = card.left + card.width / 2 + pose.dx;
+    const cy = card.top + (card.width * ratio) / 2 + pose.dy;
     const xn = (cx - 50) / 50;
     const yn = (50 - cy) / 50;
     const dz = (CARD_DEPTH[card.id] ?? 0.5) * b;
@@ -298,8 +321,8 @@ function solveSphereAnchors(cam: CamInfo): SphereSolved {
       perspFinal: zcF / depth,
       cocDepth: COC_DEPTH[card.id] * b,
       beltOffset: BELT_OFFSET[card.id] ?? { x: 0, y: 0 },
-      halfW: card.width / 2,
-      halfH: (card.width * ratio) / 2,
+      halfW: (card.width * pose.scale) / 2,
+      halfH: (card.width * pose.scale * ratio) / 2,
       homeX: cx,
       homeY: cy,
       /**
@@ -309,7 +332,11 @@ function solveSphereAnchors(cam: CamInfo): SphereSolved {
        */
       delay: (r / (5.5 * b)) * 0.1,
       dofFinal,
-      rest: parseRotate(card.restRotate),
+      rest: {
+        x: parseRotate(card.restRotate).x + pose.rx,
+        y: parseRotate(card.restRotate).y + pose.ry,
+        z: parseRotate(card.restRotate).z + pose.rz,
+      },
       enterZ: parseRotate(card.enterRotate).z,
       /** 80ms on the near ring → 160ms on the far ring. Rotation leads position. */
       lag: 0.08 + 0.08 * clamp01((CARD_DEPTH[card.id] + 2.5) / 4.6),
@@ -335,11 +362,16 @@ type SphereFrame = {
  * Child sheets: near → mid → far, sheet 0 then 1. Overall card defocus
  * rides this same window — sharp until growth starts, soft when done.
  */
-/** Grow with the 5.4s 回正 lock — same beat as face settle / head pitch. */
-const FOOT_START = 5.4;
-const FOOT_FADE = 0.45;
-const FOOT_GROUP_GAP = 0.16;
-const FOOT_DONE = FOOT_START + 2 * FOOT_GROUP_GAP + 2 * FOOT_FADE;
+/**
+ * Main cards burst first. Child sheets stay on their anchor and fade in:
+ * the one farther from screen center first, then the one closer in.
+ */
+const FOOT_OUTER_START = 4.6;
+const FOOT_FADE = 0.9;
+const FOOT_INNER_GAP = 0.72;
+/** Main-card softness stays on the later settle, not the burst. */
+const DEFOCUS_START = 5.4;
+const DEFOCUS_END = 6.6;
 
 /** Project the shrunken sphere through the LIVE camera → per-card DOM state. */
 function projectSphere(cam: CamInfo, solved: SphereSolved): SphereFrame[] {
@@ -399,10 +431,9 @@ function projectSphere(cam: CamInfo, solved: SphereSolved): SphereFrame[] {
     const rotZ = a.enterZ + (a.rest.z - a.enterZ) * clamp01(burstLocal * 1.4);
 
     /**
-     * Stay sharp through settle. Softness ramps only while child sheets
-     * grow (FOOT_START→FOOT_DONE), staggered a touch by `a.delay`.
+     * Stay sharp through the orbit. Softness still waits for settle.
      */
-    const defocus = smoothstep(FOOT_START, FOOT_DONE, cam.t - a.delay);
+    const defocus = smoothstep(DEFOCUS_START, DEFOCUS_END, cam.t);
     const blur = a.dofFinal * defocus;
     const footBlur = blur;
 
@@ -414,7 +445,7 @@ function projectSphere(cam: CamInfo, solved: SphereSolved): SphereFrame[] {
      */
     const rawLeft = 50 + (x / (z * tanH * STAGE_ASPECT)) * 50 + a.beltOffset.x * bh;
     const rawTop = 50 - (y / (z * tanH)) * 50 + a.beltOffset.y * bh;
-    const home = smoothstep(6.6, 7.25, cam.t);
+    const home = smoothstep(5.85, SETTLE_END, cam.t);
     const left = rawLeft + (a.homeX - rawLeft) * home;
     const top = rawTop + (a.homeY - rawTop) * home;
     return {
@@ -434,36 +465,221 @@ function projectSphere(cam: CamInfo, solved: SphereSolved): SphereFrame[] {
   });
 }
 
-const FOOT_GROW_REST = { along: 90, out: 20, rot: 15, scale: 1, opacity: 1 };
-const FOOT_HIDDEN = { along: 90, out: 20, rot: 15, scale: 0.94, opacity: 0 };
+const FOOT_GROW_REST = { spread: 1, scale: 1, opacity: 1 };
+const FOOT_HIDDEN = { spread: 0, scale: 0.4, opacity: 0 };
 
-function footGrowAt(t: number, depth: number, rank: number) {
-  const group = depth < -0.2 ? 0 : depth < 1.3 ? 1 : 2;
-  const start = FOOT_START + group * FOOT_GROUP_GAP + rank * FOOT_FADE;
+function footGrowAt(t: number, order: number) {
+  const start = FOOT_OUTER_START + order * FOOT_INNER_GAP;
   const u = clamp01((t - start) / FOOT_FADE);
   if (u <= 0) return FOOT_HIDDEN;
   if (u >= 1) return FOOT_GROW_REST;
   const e = u * u * (3 - 2 * u);
   return {
-    along: 90,
-    out: 20,
-    rot: 15,
-    scale: 0.94 + 0.06 * e,
+    spread: e,
+    scale: 0.4 + 0.6 * e,
     opacity: e,
   };
 }
 
+function cardBoxRatio(id: string) {
+  return id === "science-a" ? 124 / 470 : 1.28;
+}
+
+/**
+ * Stage box each child sheet was authored against, before the main-card
+ * slot swap. Sheets stay pinned here; only the parent photo moves.
+ */
+const FOOT_HOME: Record<string, { left: number; top: number; width: number }> = {
+  "science-a": { left: 35.3, top: 12.7, width: 22.5 },
+  "contest-a": { left: 13.0, top: 45.2, width: 7.0 },
+  "me-a": { left: 16.5, top: 71.5, width: 14.8 },
+  "contest-b": { left: 64.2, top: 8.5, width: 7.1 },
+  "science-b": { left: 18.5, top: 14.5, width: 9.7 },
+  "me-b": { left: 77.0, top: 30.5, width: 5.8 },
+  ip: { left: 72.5, top: 54.0, width: 12.5 },
+};
+
+/** 0 = farther from screen center (opens first), 1 = closer (opens after). */
+const FOOT_OPEN_ORDER: Record<string, number> = {};
+for (const [parentId, home] of Object.entries(FOOT_HOME)) {
+  const ratio = cardBoxRatio(parentId);
+  const ranked = feet
+    .filter((foot) => foot.parentId === parentId)
+    .map((foot) => {
+      const x = home.left + ((foot.left + foot.width / 2) / 100) * home.width;
+      const y = home.top + (foot.top / 100) * home.width * ratio;
+      return { id: foot.id, d: Math.hypot(x - 50, y - 50) };
+    })
+    .sort((a, b) => b.d - a.d);
+  ranked.forEach((foot, order) => {
+    FOOT_OPEN_ORDER[foot.id] = order;
+  });
+}
+
 function cardCenterOf(card: CardDef) {
-  const ratio = card.id === "science-a" ? 124 / 470 : 1.28;
+  const ratio = cardBoxRatio(card.id);
   return {
     x: card.left + card.width / 2,
     y: card.top + (card.width * ratio) / 2,
   };
 }
-function focusShift(card: CardDef) {
+
+/** Child sheet sits inward of its main card. `inset` and `gap` are stage %. */
+function inwardSheet(
+  card: CardDef,
+  foot: { id: string; width: number },
+  cx: number,
+  cy: number,
+  aspect: number,
+  tune: { size: number; inset: number; gap: number },
+) {
+  const home = FOOT_HOME[card.id];
+  const stageW = (home ? (foot.width / 100) * home.width : card.width * 0.42) * tune.size;
+  const order = FOOT_OPEN_ORDER[foot.id] ?? 0;
+  const boxH = card.width * aspect * STAGE_ASPECT;
+  const dx = 50 - cx;
+  const dy = 50 - cy;
+  const len = Math.hypot(dx, dy) || 1;
+  const halfReach = 0.5 * Math.hypot(card.width, boxH);
+  const tuck = Math.min(len * 0.9, halfReach * 0.72 + tune.inset + order * tune.gap);
+  const sx = cx + (dx / len) * tuck;
+  const sy = cy + (dy / len) * tuck;
+  return {
+    left: sx - stageW / 2,
+    top: sy - stageW * 0.55,
+    width: stageW,
+  };
+}
+
+type SheetNudge = {
+  dx: number;
+  dy: number;
+  scale: number;
+  rx: number;
+  ry: number;
+  rz: number;
+};
+
+const GROUP_LIST = [
+  { id: "science-a", label: "科研经历 · 上" },
+  { id: "contest-a", label: "学科竞赛 · 右上" },
+  { id: "me-a", label: "个人简介 · 右" },
+  { id: "science-b", label: "科研经历 · 右下" },
+  { id: "me-b", label: "个人简介 · 左" },
+  { id: "contest-b", label: "学科竞赛 · 左下" },
+  { id: "ip", label: "知识产权" },
+] as const;
+
+type SheetLayout = {
+  counts: Record<string, number>;
+  sheets: Record<string, SheetNudge>;
+};
+
+const SHEET_LAYOUT_KEY = "yaojun-sheet-layout";
+const REST_SHEET: SheetNudge = { dx: 0, dy: 0, scale: 1, rx: 0, ry: 0, rz: 0 };
+
+/** Confirmed layout node: main-card pose plus the locked child relationship. */
+const CONFIRMED_SHEET: SheetLayout = {
+  counts: {
+    "science-a": 1,
+    "contest-a": 1,
+    "me-a": 2,
+    "science-b": 2,
+    "me-b": 2,
+    "contest-b": 2,
+    ip: 1,
+  },
+  sheets: {
+    "me-a-0": { dx: 7, dy: -2, scale: 0.7, rx: 0, ry: 2, rz: 57 },
+    "me-a-1": { dx: 14, dy: -2, scale: 0.6, rx: 0, ry: 0, rz: 60 },
+    "science-b-0": { dx: 7, dy: 5, scale: 1.3, rx: -6, ry: -38, rz: 41 },
+    "science-b-1": { dx: 10, dy: 20, scale: 0.9, rx: 1, ry: -12, rz: 67 },
+    "contest-a-0": { dx: 3.5, dy: -10, scale: 1.3, rx: 0, ry: 0, rz: 0 },
+    "contest-a-1": { dx: 0, dy: 0, scale: 1, rx: 0, ry: 0, rz: 0 },
+    "science-a-0": { dx: -2.5, dy: -5, scale: 1.15, rx: 0, ry: 0, rz: 0 },
+    "science-a-1": { dx: 0, dy: 0, scale: 1, rx: 0, ry: 0, rz: 0 },
+    "contest-b-0": { dx: -3, dy: 14.5, scale: 2.4, rx: -11, ry: -30, rz: 53 },
+    "contest-b-1": { dx: -2.5, dy: 30, scale: 1.5, rx: 0, ry: 0, rz: 0 },
+    "me-b-0": { dx: -7, dy: 0, scale: 1.35, rx: 0, ry: 0, rz: 44 },
+    "me-b-1": { dx: -17, dy: 9, scale: 1, rx: 0, ry: 0, rz: 0 },
+    "ip-0": { dx: -4.5, dy: -6, scale: 1.55, rx: 0, ry: 0, rz: 43 },
+    "ip-1": { dx: 0, dy: 0, scale: 1, rx: 0, ry: 0, rz: 0 },
+  },
+};
+
+function defaultSheetLayout(): SheetLayout {
+  return {
+    counts: { ...CONFIRMED_SHEET.counts },
+    sheets: Object.fromEntries(
+      feet.map((foot) => [foot.id, { ...(CONFIRMED_SHEET.sheets[foot.id] ?? REST_SHEET) }]),
+    ),
+  };
+}
+
+function countOf(layout: SheetLayout, groupId: string) {
+  return layout.counts[groupId] ?? 2;
+}
+
+function sheetOf(layout: SheetLayout, id: string) {
+  return layout.sheets[id] ?? REST_SHEET;
+}
+
+function axisDeg(rotate: string, axis: "X" | "Y" | "Z") {
+  const match = rotate.match(new RegExp(`rotate${axis}\\((-?[\\d.]+)deg\\)`));
+  return match ? Number(match[1]) : 0;
+}
+
+function sheetTransform(rotate: string, nudge: { rx: number; ry: number; rz: number }) {
+  const x = axisDeg(rotate, "X") + nudge.rx;
+  const y = axisDeg(rotate, "Y") + nudge.ry;
+  const z = axisDeg(rotate, "Z") + nudge.rz;
+  return `rotateX(${x}deg) rotateY(${y}deg) rotateZ(${z}deg)`;
+}
+
+type MainNudge = {
+  dx: number;
+  dy: number;
+  scale: number;
+  rx: number;
+  ry: number;
+  rz: number;
+};
+
+type MainLayout = {
+  cards: Record<string, MainNudge>;
+};
+
+const MAIN_LAYOUT_KEY = "yaojun-main-layout";
+const REST_MAIN: MainNudge = { dx: 0, dy: 0, scale: 1, rx: 0, ry: 0, rz: 0 };
+
+const CONFIRMED_MAIN: MainLayout = {
+  cards: {
+    "science-a": { dx: 0, dy: -3, scale: 1.2, rx: 0, ry: 0, rz: 0 },
+    "contest-a": { dx: 5.5, dy: 0, scale: 1, rx: 0, ry: 0, rz: 0 },
+    "me-a": { dx: 3.5, dy: 5, scale: 1, rx: 0, ry: 0, rz: 15 },
+    "science-b": { dx: 0, dy: 10, scale: 1.2, rx: 0, ry: 0, rz: 0 },
+    "me-b": { dx: -2.5, dy: -0.5, scale: 1, rx: 0, ry: 0, rz: 0 },
+    "contest-b": { dx: 0, dy: 4, scale: 1.1, rx: 8, ry: 10, rz: 11 },
+    ip: { dx: -2.5, dy: 1, scale: 1, rx: 0, ry: 0, rz: 0 },
+  },
+};
+
+function defaultMainLayout(): MainLayout {
+  return {
+    cards: Object.fromEntries(
+      GROUP_LIST.map((group) => [group.id, { ...(CONFIRMED_MAIN.cards[group.id] ?? REST_MAIN) }]),
+    ),
+  };
+}
+
+function mainOf(layout: MainLayout, id: string) {
+  return layout.cards[id] ?? REST_MAIN;
+}
+
+function focusShift(card: CardDef, nudge: MainNudge = REST_MAIN) {
   const ratio = card.id === "science-a" ? 124 / 470 : 1.28;
-  const cx = card.left + card.width / 2;
-  const cy = card.top + (card.width * ratio) / 2;
+  const cx = card.left + card.width / 2 + nudge.dx;
+  const cy = card.top + (card.width * ratio) / 2 + nudge.dy;
   const pull = 0.22;
   return {
     x: ((50 - cx) * pull * STAGE_W) / 100,
@@ -473,12 +689,20 @@ function focusShift(card: CardDef) {
 
 export function AboutExperience() {
   const [phase, setPhase] = useState<Phase>("intro");
+  const [cardAspect, setCardAspect] = useState<Record<string, number>>({});
+  const [sheetLayout, setSheetLayout] = useState<SheetLayout>(defaultSheetLayout);
+  const [mainLayout, setMainLayout] = useState<MainLayout>(defaultMainLayout);
   const [titleOn, setTitleOn] = useState(-1);
   const [focusTopic, setFocusTopic] = useState<Topic | null>(null);
+  const [exitFlight, setExitFlight] = useState<ExitFlight | null>(null);
+  const exiting = exitFlight != null;
   const [reduce, setReduce] = useState(false);
   const [stageScale, setStageScale] = useState(1);
   const [cardRingScale, setCardRingScale] = useState(CARD_RING_BASE);
   const [flowZ, setFlowZ] = useState(0);
+  /** Micro tilt arms at FLOW_ARM — continues through titles → live. */
+  const [flowArmed, setFlowArmed] = useState(false);
+  const flowArmedRef = useRef(false);
   const [revealCards, setRevealCards] = useState(false);
   const [burstP, setBurstP] = useState(0);
   const [debug, setDebug] = useState(false);
@@ -496,13 +720,6 @@ export function AboutExperience() {
   const [camInfo, setCamInfo] = useState<CamInfo | null>(null);
   const [sphere, setSphere] = useState<SphereSolved | null>(null);
   const sphereRef = useRef<SphereSolved | null>(null);
-  /** fluid <video> — its playhead must match the official video track:
-   *  the official opening.mp4 has the fluid baked in at t=0, while ours
-   *  autoplays from page load (1–2s before the animation clock starts).
-   *  Seeking it to 0 on the first animation frame removes the phase drift
-   *  that dominates end-state pixel diffs. */
-  const fluidRef = useRef<HTMLVideoElement>(null);
-  const fluidSynced = useRef(false);
   const timers = useRef<number[]>([]);
   const clockFlush = useRef(0);
   const phaseRef = useRef(phase);
@@ -524,7 +741,48 @@ export function AboutExperience() {
     setPhase("live");
     setTitleOn(3);
     setFocusTopic(null);
+    flowArmedRef.current = true;
+    setFlowArmed(true);
   };
+
+  const beginTitleExit = useCallback(
+    (topic: Topic, href: string) => {
+      if (exiting || phase !== "live") return;
+      const heroId = TOPIC_EXIT_CARD[topic];
+      const hero = cards.find((card) => card.id === heroId);
+      if (!hero) {
+        window.location.assign(href);
+        return;
+      }
+      if (reduce) {
+        window.location.assign(href);
+        return;
+      }
+      const el = document.querySelector<HTMLElement>(`[data-card-id="${heroId}"]`);
+      const rect = el?.getBoundingClientRect();
+      const from = rect
+        ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+        : {
+            left: window.innerWidth * 0.35,
+            top: window.innerHeight * 0.28,
+            width: window.innerWidth * 0.3,
+            height: window.innerHeight * 0.42,
+          };
+      setFocusTopic(topic);
+      setExitFlight({ href, src: hero.src, from, expand: false });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setExitFlight((prev) => (prev ? { ...prev, expand: true } : prev));
+        });
+      });
+      timers.current.push(
+        window.setTimeout(() => {
+          window.location.assign(href);
+        }, EXIT_MS + 80),
+      );
+    },
+    [exiting, phase, reduce],
+  );
 
   const playTitles = useCallback(() => {
     if (scrubbing) return;
@@ -533,9 +791,8 @@ export function AboutExperience() {
     setTitleOn(-1);
     setFocusTopic(null);
     /**
-     * Brief rest on the settled ring, then hold → leave → gap → next.
-     * First card used to focus the same frame as the phase flip and read
-     * as popping on.
+     * Chain off INTRO_END — micro ring tilt already running from FLOW_ARM.
+     * Tiny delay only so the first focus doesn't pop on the same paint.
      */
     let t = FOCUS_FIRST_DELAY_MS;
     titles.forEach((title, i) => {
@@ -574,18 +831,6 @@ export function AboutExperience() {
     /** runtime camera probe for frame-by-frame regression scripts */
     (window as Window & { __openingCam?: CamInfo | null }).__openingCam = info.cam ?? null;
     (window as Window & { __openingClockInfo?: ClockInfo }).__openingClockInfo = info;
-    /** Align the fluid background playhead with the official video track.
-     *  Phase-fit against official frames (official@8.55s ≈ asset@7.45s):
-     *  the official opening.mp4 starts the fluid asset at ≈17.87s of its
-     *  18.97s loop — so park our playhead there at animation t=0. */
-    if (!fluidSynced.current && info.t < 0.05 && info.t >= 0) {
-      fluidSynced.current = true;
-      try {
-        if (fluidRef.current) fluidRef.current.currentTime = 17.87;
-      } catch {
-        /* video not seekable yet — phase stays off by the load delta */
-      }
-    }
     /** Cards follow master t every frame (no 30fps throttle — that caused stutter). */
     if (phaseRef.current === "intro" || scrubT != null) {
       setBurstP(info.cards);
@@ -600,6 +845,10 @@ export function AboutExperience() {
       }
       if (info.cards > 0.001) setRevealCards(true);
       /** Titles wait for child sheets — kicked off in playTitles at INTRO_END. */
+    }
+    if (!flowArmedRef.current && info.t >= FLOW_ARM) {
+      flowArmedRef.current = true;
+      setFlowArmed(true);
     }
     const now = performance.now();
     /** Scrub: always flush beat label; play: ~20fps React clock. */
@@ -618,6 +867,9 @@ export function AboutExperience() {
       setFocusTopic(null);
       setRevealCards(false);
       setBurstP(0);
+      flowArmedRef.current = false;
+      setFlowArmed(false);
+      setFlowZ(0);
       setHeroKey((k) => k + 1);
       return;
     }
@@ -627,6 +879,10 @@ export function AboutExperience() {
     setFocusTopic(null);
     setRevealCards(t >= 3.38);
     setBurstP(t < 3.38 ? 0 : Math.min(1, (t - 3.38) / 0.57));
+    const armed = t >= FLOW_ARM;
+    flowArmedRef.current = armed;
+    setFlowArmed(armed);
+    if (!armed) setFlowZ(0);
   };
 
   useEffect(() => {
@@ -635,6 +891,42 @@ export function AboutExperience() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration-safe probe
     setReduce(prefers);
     setDebug(new URLSearchParams(window.location.search).has("debug"));
+    const saved = window.localStorage.getItem(SHEET_LAYOUT_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Partial<SheetLayout> & { count?: number };
+        const base = defaultSheetLayout();
+        const sheets = { ...base.sheets };
+        for (const foot of feet) {
+          const nudge = parsed.sheets?.[foot.id];
+          if (nudge) sheets[foot.id] = { ...REST_SHEET, ...nudge };
+        }
+        const counts = { ...base.counts };
+        for (const group of GROUP_LIST) {
+          const savedCount = parsed.counts?.[group.id];
+          if (typeof savedCount === "number") counts[group.id] = savedCount;
+          else if (typeof parsed.count === "number") counts[group.id] = parsed.count;
+        }
+        setSheetLayout({ counts, sheets });
+      } catch {
+        /* keep defaults */
+      }
+    }
+    const savedMain = window.localStorage.getItem(MAIN_LAYOUT_KEY);
+    if (savedMain) {
+      try {
+        const parsed = JSON.parse(savedMain) as Partial<MainLayout>;
+        const base = defaultMainLayout();
+        const cardsNudge = { ...base.cards };
+        for (const group of GROUP_LIST) {
+          const nudge = parsed.cards?.[group.id];
+          if (nudge) cardsNudge[group.id] = { ...REST_MAIN, ...nudge };
+        }
+        setMainLayout({ cards: cardsNudge });
+      } catch {
+        /* keep defaults */
+      }
+    }
     if (prefers) {
       land();
       return;
@@ -669,8 +961,8 @@ export function AboutExperience() {
   }, [reduce]);
 
   useEffect(() => {
-    if (reduce || phase !== "live") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- flow tilt only exists in live phase
+    if (reduce || !flowArmed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset until FLOW_ARM arms tilt
       setFlowZ(0);
       return;
     }
@@ -691,7 +983,7 @@ export function AboutExperience() {
       window.cancelAnimationFrame(start);
       ids.forEach((id) => window.clearTimeout(id));
     };
-  }, [phase, reduce]);
+  }, [flowArmed, reduce]);
 
   const showCards = revealCards || phase !== "intro" || reduce;
   /** Light nav while white still dominates the rim; fluid is always the underlayer. */
@@ -709,11 +1001,11 @@ export function AboutExperience() {
 
   /**
    * Orbit stays ring=1 so cards track the hero; ease into the inset
-   * landing scale as the camera settles (5.4→7.25).
+   * landing scale as the camera settles (FEET_GROW→SETTLE_END).
    */
   const ringNow =
     phase === "intro" && !reduce
-      ? 1 - (1 - cardRingScale) * smoothstep(5.4, 7.25, camInfo?.t ?? clock.t)
+      ? 1 - (1 - cardRingScale) * smoothstep(FEET_GROW, SETTLE_END, camInfo?.t ?? clock.t)
       : cardRingScale;
 
   const stageStyle = {
@@ -735,11 +1027,12 @@ export function AboutExperience() {
     const inSphere = sphereActive && sf != null;
     const visible = inSphere ? (layer === "back") === sf.behind : layer === "front";
     const isFocus = focusTopic === card.topic;
+    const isExitHero = exiting && TOPIC_EXIT_CARD[focusTopic ?? "me"] === card.id;
     const settled = phase === "live" || reduce;
     const waiting = phase === "titles" && !isFocus;
     const flying = phase === "intro" && revealCards && !inSphere;
-    const childFeet = feet.filter((f) => f.parentId === card.id);
 
+    const main = mainOf(mainLayout, card.id);
     let left = cardCenterOf(card).x;
     let top = cardCenterOf(card).y;
     let rotate = card.enterRotate;
@@ -747,7 +1040,6 @@ export function AboutExperience() {
     let opacity = 1;
     let scale = 1;
     let z = 10;
-    let footBlur = 0;
     let shiftX = 0;
     let shiftY = 0;
 
@@ -760,14 +1052,26 @@ export function AboutExperience() {
       opacity = sf.opacity;
       scale = sf.scale;
       z = sf.behind ? 6 : 18;
-      footBlur = sf.blur;
     } else if (settled) {
-      rotate = card.restRotate;
+      /**
+       * Live end-state: every main card stays sharp. Soft hover nudges the
+       * matching main card — no title recolor. Exit hides the source card
+       * under the FLIP overlay that covers the viewport.
+       */
       blur = 0;
-      opacity = 1;
-      scale = 1;
-      z = 12;
-      footBlur = 5;
+      opacity = exiting ? (isExitHero ? 0 : 0.12) : 1;
+      if (!exiting && focusTopic && isFocus) {
+        rotate = card.frontRotate;
+        scale = 1.05;
+        z = 16;
+        const s = focusShift(card, main);
+        shiftX = s.x;
+        shiftY = s.y;
+      } else {
+        rotate = card.restRotate;
+        scale = exiting && !isExitHero ? 0.92 : 1;
+        z = 12;
+      }
     } else if (flying) {
       const home = cardCenterOf(card);
       const originX = home.x + (50 - home.x) * 0.45;
@@ -779,16 +1083,13 @@ export function AboutExperience() {
       opacity = 1;
       scale = 0.16 + 0.84 * burstP;
       z = 18;
-      footBlur = 2;
     } else if (isFocus) {
       rotate = card.frontRotate;
       blur = 0;
       opacity = 1;
       scale = 1.04;
       z = 16;
-      /** Main sharpens; child sheets stay soft for the whole focus hold. */
-      footBlur = DIM_BLUR;
-      const s = focusShift(card);
+      const s = focusShift(card, main);
       shiftX = s.x;
       shiftY = s.y;
     } else if (waiting) {
@@ -799,8 +1100,15 @@ export function AboutExperience() {
       opacity = 1;
       scale = 1;
       z = 10;
-      footBlur = DIM_BLUR;
     }
+
+    if (!inSphere) {
+      left += main.dx;
+      top += main.dy;
+      rotate = sheetTransform(rotate, main);
+    }
+    const settleP = inSphere ? smoothstep(5.85, SETTLE_END, camInfo?.t ?? clock.t) : 1;
+    const cardWidth = card.width * (inSphere ? 1 + (main.scale - 1) * settleP : main.scale);
 
     const blurMs = isFocus ? FOCUS_ARRIVE_MS : FOCUS_LEAVE_MS;
     const blurEase = isFocus ? FOCUS_IN_EASE : FOCUS_OUT_EASE;
@@ -809,22 +1117,22 @@ export function AboutExperience() {
       inSphere || flying
         ? "none"
         : `transform ${blurMs}ms ${blurEase}, ${blurTween}`;
-    const footFilterTween = inSphere || flying ? "none" : blurTween;
     const figureTween =
       inSphere || flying
         ? "none"
-        : `left ${blurMs}ms ${blurEase}, top ${blurMs}ms ${blurEase}, ${cardTween}`;
-
-    const nowT = phase === "intro" ? (camInfo?.t ?? clock.t) : 99;
+        : exiting
+          ? `opacity ${EXIT_MS * 0.55}ms ${EXIT_EASE}, transform ${EXIT_MS * 0.55}ms ${EXIT_EASE}, ${cardTween}`
+          : `left ${blurMs}ms ${blurEase}, top ${blurMs}ms ${blurEase}, ${cardTween}`;
 
     return (
       <figure
         key={`${card.id}-${layer}`}
+        data-card-id={layer === "front" ? card.id : undefined}
         className="absolute overflow-visible will-change-transform"
         style={{
           left: `${left}%`,
           top: `${top}%`,
-          width: `${card.width}%`,
+          width: `${cardWidth}%`,
           transform: "translate(-50%, -50%)",
           transformOrigin: "50% 50%",
           perspective: `${card.perspective}px`,
@@ -838,60 +1146,11 @@ export function AboutExperience() {
           className="relative"
           style={{
             animation:
-              settled && !reduce
+              settled && !reduce && !exiting
                 ? `card-float ${3.2 + (i % 3) * 0.35}s ease-in-out ${i * 0.12}s infinite alternate`
                 : undefined,
           }}
         >
-          {childFeet.map((foot) => {
-            const grown =
-              phase === "intro" && !reduce
-                ? footGrowAt(nowT, CARD_DEPTH[card.id] ?? 0, foot.rank)
-                : FOOT_GROW_REST;
-            // Fade happens in the authored slot. `along` stays at 90, so the
-            // tuck is zero and the sphere layout does not move.
-            const slide = grown.along / 90;
-            const tuck = 1 - slide;
-            const dx = foot.left + foot.width / 2 - 50;
-            const dy = foot.top - 50;
-            const len = Math.hypot(dx, dy) || 1;
-            const bulge =
-              Math.sin(Math.PI * Math.min(1, Math.max(0, slide))) *
-              (foot.rank === 0 ? 1 : -1) *
-              (grown.out / 20) *
-              6;
-            const left = foot.left - (foot.left - 50) * 0.65 * tuck + (-dy / len) * bulge;
-            const top = foot.top - (foot.top - 50) * 0.65 * tuck + (dx / len) * bulge;
-            const footFilter = inSphere
-              ? blur > 0.05
-                ? `blur(${blur}px)`
-                : "none"
-              : footBlur > 0.05
-                ? `blur(${footBlur}px)`
-                : "none";
-            return (
-            <div
-              key={foot.id}
-              className="pointer-events-none absolute overflow-hidden rounded-[12px]"
-              style={{
-                left: `${left}%`,
-                top: `${top}%`,
-                width: `${foot.width}%`,
-                zIndex: 1 - foot.rank,
-                transform: `scale(${grown.scale}) rotateZ(${grown.rot - 15}deg) ${foot.rotate}`,
-                transformOrigin: "50% 50%",
-                transformStyle: "preserve-3d",
-                opacity: grown.opacity,
-                visibility: grown.opacity < 0.02 ? "hidden" : "visible",
-                filter: footFilter,
-                transition: footFilterTween,
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={foot.src} alt="" className="block h-auto w-full" draggable={false} />
-            </div>
-            );
-          })}
           <div
             className="relative z-[2] origin-center"
             style={{
@@ -914,6 +1173,12 @@ export function AboutExperience() {
                 alt=""
                 className="block h-auto w-full rounded-[14px] shadow-[0_18px_40px_rgba(20,24,40,0.22)]"
                 draggable={false}
+                onLoad={(event) => {
+                  const img = event.currentTarget;
+                  const next = img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 0;
+                  if (next <= 0) return;
+                  setCardAspect((prev) => (prev[card.id] === next ? prev : { ...prev, [card.id]: next }));
+                }}
               />
             </div>
           </div>
@@ -922,8 +1187,82 @@ export function AboutExperience() {
     );
   };
 
+  const renderSheets = (layer: "front" | "back") =>
+    cards.map((card, i) => {
+      const sf = frames?.[i] ?? null;
+      const inSphere = sphereActive && sf != null;
+      if (inSphere) {
+        if ((layer === "back") !== sf.behind) return null;
+      } else if (layer === "back") {
+        return null;
+      }
+      const sheets = feet.filter((foot) => foot.parentId === card.id);
+      if (sheets.length === 0) return null;
+      const rest = cardCenterOf(card);
+      const focused = focusTopic === card.topic;
+      const live = phase === "intro" && !focused && sf ? sf : null;
+      const sheetBlur =
+        live != null
+          ? live.blur
+          : phase === "live" || reduce
+            ? 5
+            : phase === "titles"
+              ? Math.max(sphere?.anchors[i]?.dofFinal ?? DIM_BLUR, 5)
+              : 0;
+      const visibleSheets = [...sheets]
+        .sort((a, b) => (FOOT_OPEN_ORDER[a.id] ?? 0) - (FOOT_OPEN_ORDER[b.id] ?? 0))
+        .slice(0, countOf(sheetLayout, card.id));
+      return visibleSheets.map((foot) => {
+        const grown =
+          phase === "intro" && !reduce
+            ? footGrowAt(camInfo?.t ?? clock.t, FOOT_OPEN_ORDER[foot.id] ?? 0)
+            : FOOT_GROW_REST;
+        const nudge = sheetOf(sheetLayout, foot.id);
+        const mainPose = mainOf(mainLayout, card.id);
+        const aspect = cardAspect[card.id] ?? 1.25;
+        const tune = { size: nudge.scale, inset: 4, gap: 12 };
+        const restBox = inwardSheet(card, foot, rest.x, rest.y, aspect, tune);
+        const ox = restBox.left + nudge.dx - rest.x;
+        const oy = restBox.top + nudge.dy - rest.y;
+        const settleP =
+          phase === "intro" && !reduce ? smoothstep(5.85, SETTLE_END, camInfo?.t ?? clock.t) : 1;
+        const widthFactor = 1 + (mainPose.scale - 1) * settleP;
+        const burst = live ? (live.scale * widthFactor) / mainPose.scale : 1;
+        const parentX = live ? live.left : rest.x + mainPose.dx;
+        const parentY = live ? live.top : rest.y + mainPose.dy;
+        const sheetLeft = parentX + ox * mainPose.scale * burst;
+        const sheetTop = parentY + oy * mainPose.scale * burst;
+        const sheetW = restBox.width * mainPose.scale * burst;
+        return (
+          <div
+            key={foot.id}
+            className="pointer-events-none absolute overflow-hidden rounded-[12px]"
+            style={{
+              left: `${sheetLeft}%`,
+              top: `${sheetTop}%`,
+              width: `${sheetW}%`,
+              zIndex: 2 + (FOOT_OPEN_ORDER[foot.id] ?? 0),
+              transform: sheetTransform(foot.rotate, nudge),
+              transformOrigin: "50% 50%",
+              opacity: exiting ? 0 : grown.opacity,
+              visibility: grown.opacity < 0.02 && !exiting ? "hidden" : "visible",
+              filter: sheetBlur > 0.05 ? `blur(${sheetBlur}px)` : "none",
+              transition: inSphere
+                ? "none"
+                : exiting
+                  ? `opacity ${EXIT_MS * 0.4}ms ${EXIT_EASE}`
+                  : `filter ${FOCUS_LEAVE_MS}ms ${FOCUS_OUT_EASE}`,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={foot.src} alt="" className="block h-auto w-full" draggable={false} />
+          </div>
+        );
+      });
+    });
+
   return (
-    <main className="relative w-full bg-[#171717] text-[#f2f2f2]">
+    <main className="relative w-full bg-[#0e1316] text-[#f2f2f2]">
       <SiteHeader light={lightHeader} />
 
       {/*
@@ -932,39 +1271,11 @@ export function AboutExperience() {
       <section className="relative h-screen w-full overflow-hidden">
 
       {/*
-        Fluid = the first-screen background. Always under the white veil;
-        the expanding soft circle only punches a hole in white to reveal this.
+        P0 fluid: live cyan–teal WebGL field (client ref). Under the black
+        veil; the expanding hole reveals this — not the old Doubao MP4 stack.
       */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-
-        <video
-          ref={fluidRef}
-          className="absolute left-1/2 top-1/2 h-full min-h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
-          src={FLUID_VIDEO}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
-        {/*
-          Layer intensities calibrated against official 8.55s (character gone,
-          clean background read): official frame ≈ the RAW fluid asset
-          (R217 G184 B175 vs official R208 G179 B172) — the official page
-          barely lifts the video. Our earlier stack overshot to R228 G213
-          B215. video at full opacity (no bright base bleed-through), wash
-          kept, blue screen + radial diaed way down.
-        */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-70 mix-blend-soft-light"
-          style={{ backgroundImage: `url(${FLUID_WASH})` }}
-        />
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-screen"
-          style={{ backgroundImage: `url(${FLUID_BLUE})` }}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(3,90,166,0.28)_0%,transparent_54%),radial-gradient(ellipse_at_22%_35%,rgba(255,255,255,0.06)_0%,transparent_50%)]" />
-        {/* Brand dark wash — black-style trial until client fluid video lands. */}
-        <div className="absolute inset-0 bg-[#171717]/55" />
+        <FluidCyanBackdrop />
       </div>
 
       {/*
@@ -986,7 +1297,24 @@ export function AboutExperience() {
               transformOrigin: "50% 50%",
             }}
           >
-            {cards.map((card, i) => renderCard(card, i, "back"))}
+            <div
+              className="absolute inset-0"
+              style={{
+                transform: `rotateZ(${flowZ}deg)`,
+                transformOrigin: "50% 50%",
+                transition:
+                  flowArmed && !reduce
+                    ? `transform ${FLOW_TURN_MS}ms ${EASE_SINE}`
+                    : "none",
+              }}
+            >
+              <div className="absolute inset-0" style={{ zIndex: 1 }}>
+                {renderSheets("back")}
+              </div>
+              <div className="absolute inset-0" style={{ zIndex: 2 }}>
+                {cards.map((card, i) => renderCard(card, i, "back"))}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1026,26 +1354,37 @@ export function AboutExperience() {
               transform: `rotateZ(${flowZ}deg)`,
               transformOrigin: "50% 50%",
               transition:
-                phase === "live" && !reduce
+                flowArmed && !reduce
                   ? `transform ${FLOW_TURN_MS}ms ${EASE_SINE}`
                   : "none",
             }}
           >
+            <div className="absolute inset-0" style={{ zIndex: 1 }}>
+              {renderSheets("front")}
+            </div>
+            <div className="absolute inset-0" style={{ zIndex: 2 }}>
             {cards.map((card, i) => renderCard(card, i, "front"))}
+            </div>
           </div>
         </div>
 
         <nav
-          className={`absolute left-1/2 top-[46%] z-[10] flex w-max -translate-x-1/2 -translate-y-1/2 flex-col items-center transition-opacity duration-500 ${
-            (phase === "intro" || titleOn < 0) && !reduce ? "opacity-0" : "opacity-100"
+          className={`absolute left-1/2 top-[46%] z-[10] flex w-max -translate-x-1/2 -translate-y-1/2 flex-col items-center ${
+            (phase === "intro" || titleOn < 0) && !reduce ? "opacity-0" : exiting ? "opacity-0" : "opacity-100"
           }`}
+          style={{
+            transition: exiting
+              ? `opacity ${EXIT_MS * 0.45}ms ${EXIT_EASE}`
+              : "opacity 500ms ease",
+            pointerEvents: exiting ? "none" : undefined,
+          }}
         >
           {titles.map((title, i) => {
             const on = titleOn >= i;
             const current = titleOn === i && phase === "titles";
             const dim =
               phase === "live"
-                ? 0.88
+                ? 1
                 : current || (phase === "intro" && i === 0)
                   ? 1
                   : titleOn > i
@@ -1055,11 +1394,31 @@ export function AboutExperience() {
               <a
                 key={title.id}
                 href={title.href}
-                className="pointer-events-auto overflow-hidden py-[0.02em]"
+                className="pointer-events-auto relative overflow-hidden py-[0.02em]"
                 style={{
                   clipPath: on ? "inset(0% 0 0 0)" : "inset(100% 0 0 0)",
                   transition: `clip-path ${TITLE_MS}ms ${TITLE_EASE}`,
                   transform: `translateX(${on ? title.restX : title.restX + title.dir * 22}px)`,
+                }}
+                onMouseEnter={() => {
+                  if (phase === "live" && !exiting) setFocusTopic(title.topic);
+                }}
+                onMouseLeave={() => {
+                  if (phase === "live" && !exiting) setFocusTopic(null);
+                }}
+                onFocus={() => {
+                  if (phase === "live" && !exiting) setFocusTopic(title.topic);
+                }}
+                onBlur={() => {
+                  if (phase === "live" && !exiting) setFocusTopic(null);
+                }}
+                onClick={(event) => {
+                  if (phase !== "live") {
+                    event.preventDefault();
+                    return;
+                  }
+                  event.preventDefault();
+                  beginTitleExit(title.topic, title.href);
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1080,6 +1439,33 @@ export function AboutExperience() {
           })}
         </nav>
       </div>
+
+      {exitFlight ? (
+        <div className="pointer-events-none fixed inset-0 z-[60]" aria-hidden>
+          <div
+            className="absolute inset-0 bg-[#0e1316]"
+            style={{
+              opacity: exitFlight.expand ? 1 : 0,
+              transition: `opacity ${EXIT_MS * 0.7}ms ${EXIT_EASE}`,
+            }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={exitFlight.src}
+            alt=""
+            className="absolute object-cover shadow-[0_40px_120px_rgba(0,0,0,0.35)]"
+            style={{
+              left: exitFlight.expand ? 0 : exitFlight.from.left,
+              top: exitFlight.expand ? 0 : exitFlight.from.top,
+              width: exitFlight.expand ? "100%" : exitFlight.from.width,
+              height: exitFlight.expand ? "100%" : exitFlight.from.height,
+              borderRadius: exitFlight.expand ? 0 : 14,
+              transition: `left ${EXIT_MS}ms ${EXIT_EASE}, top ${EXIT_MS}ms ${EXIT_EASE}, width ${EXIT_MS}ms ${EXIT_EASE}, height ${EXIT_MS}ms ${EXIT_EASE}, border-radius ${EXIT_MS}ms ${EXIT_EASE}`,
+            }}
+            draggable={false}
+          />
+        </div>
+      ) : null}
 
       {phase !== "live" && !reduce && !debug ? (
         <button
