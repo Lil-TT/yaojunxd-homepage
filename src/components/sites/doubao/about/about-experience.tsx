@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cards, feet, titles, type CardDef, type Topic } from "./content";
+import { CustomCursor } from "./custom-cursor";
 import { FluidCyanBackdrop } from "./fluid-cyan-backdrop";
 import { OpeningDebug } from "./opening-debug";
 import { OpeningHero } from "./opening-hero";
@@ -54,13 +55,11 @@ const FLOW_TURN_MS = 7000;
 const FLOW_HOLD_MS = 1200;
 /** Unselected cards hold this blur for the whole title focus. */
 const DIM_BLUR = 6;
-
-/**
- * Title → detail: one hero card per topic flies to the lens and covers the
- * viewport, then we leave. No underline / recolor — motion is the cue.
- */
+/** Live hover：非对焦主卡毛玻璃（甲方：对焦以外加强虚化）。 */
+const LIVE_DIM_BLUR = 10;
+const LIVE_DIM_OPACITY = 0.78;
 const TOPIC_EXIT_CARD: Record<Topic, string> = {
-  me: "me-a",
+  me: "me-b",
   contest: "contest-a",
   science: "science-a",
   ip: "ip",
@@ -78,8 +77,11 @@ type ExitFlight = {
 /**
  * Landing ring vs official: cards read larger than the center titles.
  * Hero stays full-bleed cover (never contain) — only the card stage fits.
+ * Wide screens keep ring tighter so top cards (科研经历上方) stay in viewport.
  */
-const CARD_RING_BASE = 1.28;
+const CARD_RING_BASE = 1.16;
+/** Ultra-wide (≥≈21:9-ish): pull in a bit more so top group isn't clipped. */
+const CARD_RING_ULTRA = 1.1;
 /** Portrait (w/h < 1): bump ring so cards fill the tall frame more. */
 const CARD_RING_PORTRAIT = 1.42;
 
@@ -97,6 +99,7 @@ function calcStageFit() {
   const cover = Math.max(w / STAGE_W, h / STAGE_H);
   const contain = Math.min(w / STAGE_W, h / STAGE_H);
   const visibleFrac = Math.min(w / (STAGE_W * cover), h / (STAGE_H * cover), 1);
+  const landscapeRing = aspect >= 2 ? CARD_RING_ULTRA : CARD_RING_BASE;
 
   if (aspect < 1) {
     return {
@@ -108,10 +111,10 @@ function calcStageFit() {
   }
 
   if (visibleFrac >= 0.999) {
-    return { stage: cover, ring: CARD_RING_BASE, visibleFrac, mode: "cover" as const };
+    return { stage: cover, ring: landscapeRing, visibleFrac, mode: "cover" as const };
   }
 
-  const ring = CARD_RING_BASE * (0.9 + 0.1 * visibleFrac);
+  const ring = landscapeRing * (0.9 + 0.1 * visibleFrac);
   return {
     stage: contain * 0.98,
     ring,
@@ -486,6 +489,20 @@ function cardBoxRatio(id: string) {
 }
 
 /**
+ * Baked h/w so skip-to-live and wait-for-end share the same sheet geometry.
+ * (onLoad used to flip 1.25 → real ratio mid-session and desync 子卡.)
+ */
+const CARD_ASPECTS: Record<string, number> = {
+  "science-a": 150 / 550,
+  "contest-a": 718 / 1024,
+  "me-a": 1024 / 764,
+  "contest-b": 1152 / 800,
+  "science-b": 5612 / 7904,
+  "me-b": 2404 / 1802,
+  ip: 5613 / 3969,
+};
+
+/**
  * Stage box each child sheet was authored against, before the main-card
  * slot swap. Sheets stay pinned here; only the parent photo moves.
  */
@@ -522,6 +539,15 @@ function cardCenterOf(card: CardDef) {
     x: card.left + card.width / 2,
     y: card.top + (card.width * ratio) / 2,
   };
+}
+
+/** Stable % strings so SSR HTML matches client hydration (avoid float noise). */
+function stylePct(n: number): string {
+  return `${(Math.round(n * 1e4) / 1e4).toFixed(4)}%`;
+}
+
+function styleOpacity(n: number): number {
+  return Math.round(n * 1e4) / 1e4;
 }
 
 /** Child sheet sits inward of its main card. `inset` and `gap` are stage %. */
@@ -563,11 +589,11 @@ type SheetNudge = {
 const GROUP_LIST = [
   { id: "science-a", label: "科研经历 · 上" },
   { id: "contest-a", label: "学科竞赛 · 右上" },
-  { id: "me-a", label: "个人简介 · 右" },
+  { id: "me-a", label: "知识产权 · 右" },
   { id: "science-b", label: "科研经历 · 右下" },
   { id: "me-b", label: "个人简介 · 左" },
   { id: "contest-b", label: "学科竞赛 · 左下" },
-  { id: "ip", label: "知识产权" },
+  { id: "ip", label: "知识产权 · 上" },
 ] as const;
 
 type SheetLayout = {
@@ -689,7 +715,7 @@ function focusShift(card: CardDef, nudge: MainNudge = REST_MAIN) {
 
 export function AboutExperience() {
   const [phase, setPhase] = useState<Phase>("intro");
-  const [cardAspect, setCardAspect] = useState<Record<string, number>>({});
+  const [cardAspect, setCardAspect] = useState<Record<string, number>>(CARD_ASPECTS);
   const [sheetLayout, setSheetLayout] = useState<SheetLayout>(defaultSheetLayout);
   const [mainLayout, setMainLayout] = useState<MainLayout>(defaultMainLayout);
   const [titleOn, setTitleOn] = useState(-1);
@@ -697,6 +723,8 @@ export function AboutExperience() {
   const [exitFlight, setExitFlight] = useState<ExitFlight | null>(null);
   const exiting = exitFlight != null;
   const [reduce, setReduce] = useState(false);
+  /** Skip SSR for cursor + avoid first-paint layout drift from localStorage. */
+  const [hydrated, setHydrated] = useState(false);
   const [stageScale, setStageScale] = useState(1);
   const [cardRingScale, setCardRingScale] = useState(CARD_RING_BASE);
   const [flowZ, setFlowZ] = useState(0);
@@ -738,6 +766,9 @@ export function AboutExperience() {
     setScrubT(null);
     setRevealCards(true);
     setBurstP(1);
+    setCamInfo(null);
+    setSphere(null);
+    sphereRef.current = null;
     setPhase("live");
     setTitleOn(3);
     setFocusTopic(null);
@@ -887,6 +918,7 @@ export function AboutExperience() {
 
   useEffect(() => {
     // mount-only browser probes (must run client-side to avoid hydration mismatch)
+    setHydrated(true);
     const prefers = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration-safe probe
     setReduce(prefers);
@@ -959,6 +991,22 @@ export function AboutExperience() {
       document.body.style.overflow = "";
     };
   }, [reduce]);
+
+  /**
+   * Live 标题对焦：用 pointer 坐标持续同步，避免长时间 hover 时
+   * mouseleave/blur 误清空（外置 Chrome + 自定义光标更易复现）。
+   */
+  useEffect(() => {
+    if (phase !== "live" || exiting) return;
+    const syncFocus = (event: PointerEvent) => {
+      const hit = document.elementFromPoint(event.clientX, event.clientY);
+      const link = hit?.closest<HTMLElement>("[data-topic]");
+      const next = (link?.dataset.topic as Topic | undefined) ?? null;
+      setFocusTopic((prev) => (prev === next ? prev : next));
+    };
+    document.addEventListener("pointermove", syncFocus, { passive: true });
+    return () => document.removeEventListener("pointermove", syncFocus);
+  }, [phase, exiting]);
 
   useEffect(() => {
     if (reduce || !flowArmed) {
@@ -1054,20 +1102,26 @@ export function AboutExperience() {
       z = sf.behind ? 6 : 18;
     } else if (settled) {
       /**
-       * Live end-state: every main card stays sharp. Soft hover nudges the
-       * matching main card — no title recolor. Exit hides the source card
-       * under the FLIP overlay that covers the viewport.
+       * Live：悬停标题时对焦主卡推近清晰，其余主卡毛玻璃虚化。
+       * Exit hides the source card under the FLIP overlay.
        */
-      blur = 0;
       opacity = exiting ? (isExitHero ? 0 : 0.12) : 1;
       if (!exiting && focusTopic && isFocus) {
+        blur = 0;
         rotate = card.frontRotate;
         scale = 1.05;
         z = 16;
         const s = focusShift(card, main);
         shiftX = s.x;
         shiftY = s.y;
+      } else if (!exiting && focusTopic && !isFocus) {
+        blur = LIVE_DIM_BLUR;
+        opacity = LIVE_DIM_OPACITY;
+        rotate = card.restRotate;
+        scale = 0.97;
+        z = 10;
       } else {
+        blur = 0;
         rotate = card.restRotate;
         scale = exiting && !isExitHero ? 0.92 : 1;
         z = 12;
@@ -1130,14 +1184,14 @@ export function AboutExperience() {
         data-card-id={layer === "front" ? card.id : undefined}
         className="absolute overflow-visible will-change-transform"
         style={{
-          left: `${left}%`,
-          top: `${top}%`,
-          width: `${cardWidth}%`,
+          left: stylePct(left),
+          top: stylePct(top),
+          width: stylePct(cardWidth),
           transform: "translate(-50%, -50%)",
           transformOrigin: "50% 50%",
           perspective: `${card.perspective}px`,
           zIndex: z,
-          opacity,
+          opacity: styleOpacity(opacity),
           display: visible ? undefined : "none",
           transition: figureTween,
         }}
@@ -1177,6 +1231,9 @@ export function AboutExperience() {
                   const img = event.currentTarget;
                   const next = img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 0;
                   if (next <= 0) return;
+                  const baked = CARD_ASPECTS[card.id];
+                  // Ignore tiny decode drift — keep baked ratio so skip/wait stay aligned.
+                  if (baked != null && Math.abs(baked - next) < 0.04) return;
                   setCardAspect((prev) => (prev[card.id] === next ? prev : { ...prev, [card.id]: next }));
                 }}
               />
@@ -1205,7 +1262,11 @@ export function AboutExperience() {
         live != null
           ? live.blur
           : phase === "live" || reduce
-            ? 5
+            ? focusTopic
+              ? focused
+                ? DIM_BLUR
+                : LIVE_DIM_BLUR + 2
+              : 5
             : phase === "titles"
               ? Math.max(sphere?.anchors[i]?.dofFinal ?? DIM_BLUR, 5)
               : 0;
@@ -1219,7 +1280,7 @@ export function AboutExperience() {
             : FOOT_GROW_REST;
         const nudge = sheetOf(sheetLayout, foot.id);
         const mainPose = mainOf(mainLayout, card.id);
-        const aspect = cardAspect[card.id] ?? 1.25;
+        const aspect = cardAspect[card.id] ?? CARD_ASPECTS[card.id] ?? 1.25;
         const tune = { size: nudge.scale, inset: 4, gap: 12 };
         const restBox = inwardSheet(card, foot, rest.x, rest.y, aspect, tune);
         const ox = restBox.left + nudge.dx - rest.x;
@@ -1238,13 +1299,13 @@ export function AboutExperience() {
             key={foot.id}
             className="pointer-events-none absolute overflow-hidden rounded-[12px]"
             style={{
-              left: `${sheetLeft}%`,
-              top: `${sheetTop}%`,
-              width: `${sheetW}%`,
+              left: stylePct(sheetLeft),
+              top: stylePct(sheetTop),
+              width: stylePct(sheetW),
               zIndex: 2 + (FOOT_OPEN_ORDER[foot.id] ?? 0),
               transform: sheetTransform(foot.rotate, nudge),
               transformOrigin: "50% 50%",
-              opacity: exiting ? 0 : grown.opacity,
+              opacity: styleOpacity(exiting ? 0 : grown.opacity),
               visibility: grown.opacity < 0.02 && !exiting ? "hidden" : "visible",
               filter: sheetBlur > 0.05 ? `blur(${sheetBlur}px)` : "none",
               transition: inSphere
@@ -1262,7 +1323,8 @@ export function AboutExperience() {
     });
 
   return (
-    <main className="relative w-full bg-[#0e1316] text-[#f2f2f2]">
+    <main className="relative w-full bg-[#0e1316] text-[#f2f2f2]" suppressHydrationWarning>
+      {hydrated ? <CustomCursor /> : null}
       <SiteHeader light={lightHeader} />
 
       {/*
@@ -1390,27 +1452,28 @@ export function AboutExperience() {
                   : titleOn > i
                     ? 0.55
                     : 0;
+            const active =
+              phase === "live" && !exiting && focusTopic === title.topic;
             return (
               <a
                 key={title.id}
                 href={title.href}
-                className="pointer-events-auto relative overflow-hidden py-[0.02em]"
+                data-topic={title.topic}
+                data-active={active ? "true" : "false"}
+                className="yao-title-link pointer-events-auto relative inline-block px-[0.06em] py-[0.08em] text-[clamp(40px,7.2vh,72px)] leading-[1.15] whitespace-nowrap"
                 style={{
-                  clipPath: on ? "inset(0% 0 0 0)" : "inset(100% 0 0 0)",
-                  transition: `clip-path ${TITLE_MS}ms ${TITLE_EASE}`,
-                  transform: `translateX(${on ? title.restX : title.restX + title.dir * 22}px)`,
-                }}
-                onMouseEnter={() => {
-                  if (phase === "live" && !exiting) setFocusTopic(title.topic);
-                }}
-                onMouseLeave={() => {
-                  if (phase === "live" && !exiting) setFocusTopic(null);
+                  opacity: on ? dim : 0,
+                  filter: on ? "blur(0px)" : "blur(10px)",
+                  transform: `translateX(${on ? title.restX : title.restX + title.dir * 28}px) translateY(${on ? 0 : 10}px)`,
+                  transition: [
+                    `opacity ${TITLE_MS}ms ${TITLE_EASE}`,
+                    `filter ${TITLE_MS}ms ${TITLE_EASE}`,
+                    `transform ${TITLE_MS}ms ${TITLE_EASE}`,
+                    "color 280ms cubic-bezier(0.33, 1, 0.68, 1)",
+                  ].join(", "),
                 }}
                 onFocus={() => {
                   if (phase === "live" && !exiting) setFocusTopic(title.topic);
-                }}
-                onBlur={() => {
-                  if (phase === "live" && !exiting) setFocusTopic(null);
                 }}
                 onClick={(event) => {
                   if (phase !== "live") {
@@ -1421,19 +1484,7 @@ export function AboutExperience() {
                   beginTitleExit(title.topic, title.href);
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={title.src}
-                  alt=""
-                  className="block h-[clamp(68px,11.5vh,108px)] w-auto max-w-[min(90vw,600px)] object-contain"
-                  style={{
-                    opacity: on ? dim : 0,
-                    filter: on ? "blur(0px)" : "blur(8px)",
-                    transform: `translateY(${on ? 0 : 12}%)`,
-                    transition: `opacity ${TITLE_MS}ms ${TITLE_EASE}, filter ${TITLE_MS}ms ${TITLE_EASE}, transform ${TITLE_MS}ms ${TITLE_EASE}`,
-                  }}
-                  draggable={false}
-                />
+                {title.label}
               </a>
             );
           })}

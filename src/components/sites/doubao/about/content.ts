@@ -14,7 +14,9 @@ export const CHARACTER_CLIPS = {
 export const FLUID_VIDEO = `${ASSET}/bg/part1.mp4`;
 export const FLUID_WASH = `${ASSET}/bg/part2-talent.png`;
 export const FLUID_BLUE = `${ASSET}/bg/bg-blue.png`;
-export const LOGO_SRC = `${ASSET}/logo.png`;
+/** 手写签名风 logo（甲方新稿）；旧 logo.png 仍保留作回退。 */
+export const LOGO_SRC = `${ASSET}/logo-script.png`;
+export const LOGO_LEGACY_SRC = `${ASSET}/logo.png`;
 
 export type Topic = "me" | "contest" | "science" | "ip";
 
@@ -53,7 +55,8 @@ export const cards: CardDef[] = [
   {
     id: "contest-a",
     topic: "contest",
-    src: `${ASSET}/cards/card-contest-1.jpg`,
+    /** 红框 → 挑战杯获奖证书 */
+    src: `${ASSET}/cards/card-contest-challenge.jpg`,
     left: 62.2,
     top: 14.0,
     width: 11.2,
@@ -65,8 +68,9 @@ export const cards: CardDef[] = [
   },
   {
     id: "me-a",
-    topic: "me",
-    src: `${ASSET}/cards/card-me.jpg`,
+    topic: "ip",
+    /** 黄框 → EUIPO 知产证（简介1 + 知产2） */
+    src: `${ASSET}/cards/card-ip-eu.jpg`,
     left: 77.0,
     top: 30.5,
     width: 5.8,
@@ -102,6 +106,7 @@ export const cards: CardDef[] = [
     frontRotate: "rotateX(8deg) rotateY(-10deg) rotateZ(2deg)",
     dimBlur: 15,
   },
+  /** 唯一个人简介主卡（左侧立拍） */
   {
     id: "me-b",
     topic: "me",
@@ -133,17 +138,17 @@ export const cards: CardDef[] = [
 export type TitleDef = {
   id: string;
   topic: Topic;
-  src: string;
+  label: string;
   dir: 1 | -1;
   restX: number;
   href: string;
 };
 
 export const titles: TitleDef[] = [
-  { id: "t1", topic: "me", src: `${ASSET}/titles/text-1.png`, dir: 1, restX: 42, href: `${HOME_URL}?me/` },
-  { id: "t2", topic: "contest", src: `${ASSET}/titles/text-2.png`, dir: -1, restX: -48, href: `${HOME_URL}?contest/` },
-  { id: "t3", topic: "science", src: `${ASSET}/titles/text-3.png`, dir: 1, restX: 46, href: `${HOME_URL}?science/` },
-  { id: "t4", topic: "ip", src: `${ASSET}/titles/text-4.png`, dir: -1, restX: -36, href: `${HOME_URL}?ip/` },
+  { id: "t1", topic: "me", label: "个人简介", dir: 1, restX: 42, href: `${HOME_URL}?me/` },
+  { id: "t2", topic: "contest", label: "学科竞赛", dir: -1, restX: -48, href: `${HOME_URL}?contest/` },
+  { id: "t3", topic: "science", label: "科研经历", dir: 1, restX: 46, href: `${HOME_URL}?science/` },
+  { id: "t4", topic: "ip", label: "知识产权", dir: -1, restX: -36, href: `${HOME_URL}?ip/` },
 ];
 
 export type FootDef = {

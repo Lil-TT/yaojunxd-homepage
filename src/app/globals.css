@@ -144,3 +144,23 @@
   from { transform: translateY(0); }
   to { transform: translateY(-10px); }
 }
+
+/* Custom cursor — hide system pointer; DOM layer draws Zero-style cursors */
+html.yao-cursor-hide,
+html.yao-cursor-hide * {
+  cursor: none !important;
+}
+
+/* Homepage titles: bold serif + blue on hover (no underline) */
+.yao-title-link {
+  font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: 0.06em;
+  transition: color 280ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+.yao-title-link:hover,
+.yao-title-link:focus-visible,
+.yao-title-link[data-active="true"] {
+  color: #035aa6;
+}

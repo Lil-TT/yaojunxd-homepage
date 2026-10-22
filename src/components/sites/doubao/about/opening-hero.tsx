@@ -757,7 +757,12 @@ export const OpeningHero = memo(function OpeningHero({
         src="/sites/yaojunxd/about/hello-bubble.png"
         alt=""
         draggable={false}
-        className="absolute left-[calc(50%-300px)] top-[min(50%,44vh)] z-[9] w-[120px] max-w-none origin-[86%_58%]"
+        /**
+         * 宽屏：约在人物左侧（50%-300）。
+         * 缩窄：偏移量随 vw 减小 → 气泡整体右移，贴近人物。
+         * 宽度 clamp 下限 88px，保证字仍可读。
+         */
+        className="absolute top-[min(50%,44vh)] z-[9] max-w-none origin-[86%_58%] left-[max(12px,calc(50%-min(300px,28vw)))] w-[clamp(88px,15vw,120px)]"
         style={{ opacity: 0 }}
       />
     </div>

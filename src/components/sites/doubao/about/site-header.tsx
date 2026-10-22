@@ -35,7 +35,7 @@ export const SiteHeader = memo(function SiteHeader({
           <img
             src={LOGO_SRC}
             alt="yaojunxd"
-            className={`h-8 w-auto object-contain sm:h-9 ${light ? "brightness-0 invert" : ""}`}
+            className={`h-9 w-auto object-contain sm:h-10 ${light ? "brightness-0 invert" : ""}`}
             draggable={false}
           />
         </a>
